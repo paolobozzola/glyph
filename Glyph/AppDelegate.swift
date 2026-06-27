@@ -78,6 +78,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         editMenu.addItem(.separator())
 
+        // Find (drives the in-editor search bar via the bridge)
+        let findItem = editMenu.addItem(withTitle: "Find", action: nil, keyEquivalent: "")
+        let findMenu = NSMenu(title: "Find")
+        findItem.submenu = findMenu
+        addCommand(to: findMenu, "Find…", "find", key: "f")
+        addCommand(to: findMenu, "Find and Replace…", "findReplace", key: "f", modifiers: [.command, .option])
+        addCommand(to: findMenu, "Find Next", "findNext", key: "g")
+        addCommand(to: findMenu, "Find Previous", "findPrev", key: "g", modifiers: [.command, .shift])
+        editMenu.addItem(.separator())
+
         // Spelling & grammar (WKWebView handles these via the responder chain)
         let spellingItem = editMenu.addItem(withTitle: "Spelling and Grammar", action: nil, keyEquivalent: "")
         let spellingMenu = NSMenu(title: "Spelling and Grammar")

@@ -56,7 +56,7 @@ over a custom `app://` scheme handler.
 - [x] **Printing (⌘P)** — `WKWebView.printOperation`
 - [x] **Share menu** — `NSSharingServicePicker`
 - [x] **Format menu** — bold/italic/strike/code/link, headings 1–6, lists, quote, code block, hr, table
-- [ ] **Find & replace** — needs an in-editor search UI (ProseMirror); deferred to next pass
+- [x] **Find & replace** — in-editor find bar (prosemirror-search): ⌘F / ⌥⌘F / ⌘G / ⇧⌘G, match count, highlights, replace + replace-all
 
 ### v1.x — polish
 - [ ] Image handling: paste/drag → save to sibling assets folder, insert relative link

@@ -6,9 +6,9 @@ live rich-text rendering while the file on disk stays plain, portable Markdown.
 - **Name:** Glyph
 - **Owner:** paolobozzola (paolo.bozzola@moviri.com)
 - **Repo:** github.com/paolobozzola/glyph (private initially)
-- **Status:** M2 in progress — Format menu (bold/italic/headings/lists/quote/code/table/hr,
-  commands verified via Playwright), Spelling submenu, Printing (⌘P), Share menu. Find &
-  replace still TODO. Build/run via `docs/SETUP.md`; roadmap in `docs/PLAN.md`.
+- **Status:** M2 done — Format menu (bold/italic/headings/lists/quote/code/table/hr), Spelling,
+  Printing (⌘P), Share, and Find & Replace (prosemirror-search; ⌘F/⌥⌘F/⌘G/⇧⌘G). All editor
+  commands verified via Playwright. Build/run via `docs/SETUP.md`; roadmap in `docs/PLAN.md`.
 
 ## Product principle
 

@@ -9,7 +9,8 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@milkdown/crepe": "^7.5.0"
+    "@milkdown/crepe": "^7.5.0",
+    "prosemirror-search": "^1.1.1"
   },
   "devDependencies": {
     "typescript": "^5.5.0",
