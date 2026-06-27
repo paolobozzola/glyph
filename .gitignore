@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Xcode / Swift
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+.swiftpm/
+.build/
+
+# Node / Vite (editor bundle)
+node_modules/
+dist/
+*.log
+
+# Secrets / signing
+*.p12
+*.cer
+*.provisionprofile
+.env
