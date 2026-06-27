@@ -161,7 +161,11 @@ In Swift: `extension UTType { static let markdown = UTType(importedAs: "net.dari
   /Applications — so live Finder behavior is verified at/after M4.** (`qlmanage -p` cannot
   host app-extension previews; `qlmanage -t` falls back to the system text thumbnailer until
   ours is activated.)
-- **M4 — Packaging.** Developer ID signing (activates the QL extensions), notarize, DMG, Sparkle.
+- **M4 — Packaging. ◑ Pipeline ready (blocked on paid membership).** `scripts/package.sh` +
+  `make dist` sign with Developer ID (hardened runtime), build a DMG, notarize, and staple
+  — see `docs/RELEASE.md`. Requires the paid Apple Developer Program to run (creates the
+  Developer ID cert + notary credentials). Sparkle auto-updates deferred until there's an
+  appcast hosting URL.
 
 ## 9. First coding session = M0
 

@@ -13,6 +13,9 @@ project: ## Generate Glyph.xcodeproj from project.yml (needs xcodegen)
 open: all ## Build everything and open the project in Xcode
 	open Glyph.xcodeproj
 
+dist: all ## Sign (Developer ID), notarize, and build dist/Glyph.dmg (see docs/RELEASE.md)
+	DEV_ID="$(DEV_ID)" NOTARY_PROFILE="$(NOTARY_PROFILE)" ./scripts/package.sh
+
 clean: ## Remove generated artifacts
 	rm -rf web/node_modules web-preview/node_modules \
 	       Glyph/Resources/editor QuickLook/Resources/preview Glyph.xcodeproj

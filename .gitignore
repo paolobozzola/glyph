@@ -28,3 +28,6 @@ QuickLook/Resources/preview/
 
 # Playwright MCP scratch output
 .playwright-mcp/
+
+# Release artifacts
+dist/
