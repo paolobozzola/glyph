@@ -12,6 +12,9 @@ settings:
     SWIFT_VERSION: "5.0"          # Swift 5 language mode for M0; move to 6 later
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
+    # Local dev signing (free Apple Development cert).
+    DEVELOPMENT_TEAM: "537QQR9WVW"
+    CODE_SIGN_STYLE: Automatic
 
 targets:
   Glyph:

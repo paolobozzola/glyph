@@ -79,6 +79,14 @@ Then in Finder: select a `.md` file and press **space** (preview), and view it i
 Notes:
 - `qlmanage -p` cannot host app-extension previews (crashes in ExtensionFoundation); use Finder.
 - Ad-hoc builds in DerivedData are **not** discovered by `pluginkit` — install to /Applications.
+- **Free Personal-Team (Apple Development) signing runs the app fine but did not get the QL
+  extensions registered by `pluginkit` on macOS Tahoe.** Reliable QL extension registration
+  in practice needs **Developer ID + notarization** (M4). The extension code itself is
+  verified (preview renders in a browser; thumbnail via a bitmap harness).
+- **UTI ownership matters:** on a Mac with iA Writer installed, `.md` is typed as
+  `net.ia.markdown` (not `net.daringfireball.markdown`). Glyph now declares
+  `net.daringfireball.markdown`, `net.ia.markdown`, and `public.markdown` for both the
+  document type and the QL extensions so it matches `.md` whoever typed it.
 
 ## Troubleshooting
 
