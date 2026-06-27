@@ -43,6 +43,9 @@ const DEBOUNCE_MS = 120;
 
 let crepe: Crepe | null = null;
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+// The last Markdown we loaded or reported. Used to ignore the no-op `markdownUpdated`
+// that fires on initial render — otherwise the host marks the document dirty on open.
+let lastMarkdown = "";
 
 // --- theme ---------------------------------------------------------------
 const themeStyle = document.createElement("style");
@@ -66,10 +69,13 @@ async function mount(markdown: string): Promise<void> {
     await crepe.destroy();
     crepe = null;
   }
+  lastMarkdown = markdown;
   crepe = new Crepe({ root, defaultValue: markdown });
   await crepe.create();
   crepe.on((listener) => {
     listener.markdownUpdated((_ctx, md) => {
+      if (md === lastMarkdown) return; // ignore initial render / no-op updates
+      lastMarkdown = md;
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => postToHost({ type: "change", markdown: md }), DEBOUNCE_MS);
     });

@@ -44,30 +44,10 @@ final class MarkdownDocument: NSDocument {
         editor?.loadMarkdownIntoEditor()   // refresh editor on revert / external reload
     }
 
-    /// Explicit saves (⌘S / Save As) pull the freshest Markdown straight from the
-    /// editor first, so nothing typed in the last debounce window is lost.
-    override func save(to url: URL,
-                       ofType typeName: String,
-                       for saveOperation: NSDocument.SaveOperationType,
-                       completionHandler: @escaping (Error?) -> Void) {
-        guard let editor else {
-            superSave(to: url, ofType: typeName, for: saveOperation, completionHandler: completionHandler)
-            return
-        }
-        editor.requestLatestMarkdown { [weak self] latest in
-            guard let self else { return }
-            if let latest { self.text = latest }
-            self.superSave(to: url, ofType: typeName, for: saveOperation, completionHandler: completionHandler)
-        }
-    }
-
-    // `super` can't be referenced inside a closure, so route through a helper.
-    private func superSave(to url: URL,
-                           ofType typeName: String,
-                           for saveOperation: NSDocument.SaveOperationType,
-                           completionHandler: @escaping (Error?) -> Void) {
-        super.save(to: url, ofType: typeName, for: saveOperation, completionHandler: completionHandler)
-    }
+    // Note: `text` is kept current by the editor's debounced `change` stream, so
+    // `data(ofType:)` already has fresh content. We deliberately do NOT override the
+    // async save to pull from the editor — during window teardown the WKWebView's
+    // `evaluateJavaScript` completion may never fire, which would hang the close.
 
     // MARK: - External changes
 

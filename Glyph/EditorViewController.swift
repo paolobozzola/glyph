@@ -19,7 +19,10 @@ final class EditorViewController: NSViewController, WKScriptMessageHandler, NSWi
     override func loadView() {
         let configuration = WKWebViewConfiguration()
         configuration.setURLSchemeHandler(AppSchemeHandler(), forURLScheme: "app")
-        configuration.userContentController.add(self, name: "glyph")
+        // Weak proxy: WKUserContentController retains its handler, which would
+        // otherwise create a cycle (controller → self → webView → config → controller)
+        // and keep the editor/web view alive after the window closes.
+        configuration.userContentController.add(WeakScriptMessageHandler(self), name: "glyph")
 
         webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 820, height: 640),
                             configuration: configuration)
@@ -83,14 +86,6 @@ final class EditorViewController: NSViewController, WKScriptMessageHandler, NSWi
         webView.evaluateJavaScript("window.glyph.setMarkdown(\(payload)[0])")
     }
 
-    /// Read the live Markdown out of the editor (used by save).
-    func requestLatestMarkdown(_ completion: @escaping (String?) -> Void) {
-        guard isEditorReady else { completion(nil); return }
-        webView.evaluateJavaScript("window.glyph.getMarkdown()") { value, _ in
-            completion(value as? String)
-        }
-    }
-
     // MARK: - Theme
 
     @objc private func systemAppearanceChanged() { pushTheme() }
@@ -114,5 +109,18 @@ final class EditorViewController: NSViewController, WKScriptMessageHandler, NSWi
 
     func windowDidBecomeKey(_ notification: Notification) {
         document?.checkForExternalChanges()
+    }
+}
+
+/// Forwards script messages to a weakly-held handler, so `WKUserContentController`
+/// doesn't keep the editor alive after its window closes.
+final class WeakScriptMessageHandler: NSObject, WKScriptMessageHandler {
+    private weak var target: WKScriptMessageHandler?
+
+    init(_ target: WKScriptMessageHandler) { self.target = target }
+
+    func userContentController(_ controller: WKUserContentController,
+                              didReceive message: WKScriptMessage) {
+        target?.userContentController(controller, didReceive: message)
     }
 }
