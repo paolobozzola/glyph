@@ -6,9 +6,10 @@ live rich-text rendering while the file on disk stays plain, portable Markdown.
 - **Name:** Glyph
 - **Owner:** paolobozzola (paolo.bozzola@moviri.com)
 - **Repo:** github.com/paolobozzola/glyph (private initially)
-- **Status:** M2 done — Format menu (bold/italic/headings/lists/quote/code/table/hr), Spelling,
-  Printing (⌘P), Share, and Find & Replace (prosemirror-search; ⌘F/⌥⌘F/⌘G/⇧⌘G). All editor
-  commands verified via Playwright. Build/run via `docs/SETUP.md`; roadmap in `docs/PLAN.md`.
+- **Status:** M3 done — Quick Look **preview** (WKWebView + markdown-it) and **thumbnail**
+  (native CGContext) app-extension targets, embedded in the app. M0–M2 complete (editor,
+  documents, formatting, find/replace, spelling, print, share). QL extensions only *activate*
+  from a signed app in /Applications (M4). Build/run via `docs/SETUP.md`; roadmap in `docs/PLAN.md`.
 
 ## Product principle
 

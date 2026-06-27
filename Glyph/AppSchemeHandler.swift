@@ -1,22 +1,30 @@
 import WebKit
 import Foundation
 
-/// Serves the bundled editor over `app://editor/...` so the web view loads entirely
-/// from the app bundle with no network access. The editor is a single self-contained
-/// `index.html` in `Resources/editor/` (see web/vite.config.ts).
+/// Serves a bundled web payload over `app://<host>/...` so the web view loads entirely
+/// from the bundle with no network access. Used by the editor (`Resources/editor/`) and
+/// the Quick Look preview extension (`Resources/preview/`).
 final class AppSchemeHandler: NSObject, WKURLSchemeHandler {
+    private let subdirectory: String
+    private let bundle: Bundle
+
+    init(subdirectory: String = "editor", bundle: Bundle = .main) {
+        self.subdirectory = subdirectory
+        self.bundle = bundle
+    }
+
     func webView(_ webView: WKWebView, start task: WKURLSchemeTask) {
         guard let url = task.request.url else {
             task.didFailWithError(URLError(.badURL)); return
         }
 
-        // app://editor/index.html  ->  Resources/editor/index.html
+        // app://<host>/index.html  ->  Resources/<subdirectory>/index.html
         let name = url.path.isEmpty || url.path == "/" ? "index.html"
                                                        : (url.path as NSString).lastPathComponent
         let base = (name as NSString).deletingPathExtension
         let ext = (name as NSString).pathExtension
 
-        guard let fileURL = Bundle.main.url(forResource: base, withExtension: ext, subdirectory: "editor"),
+        guard let fileURL = bundle.url(forResource: base, withExtension: ext, subdirectory: subdirectory),
               let data = try? Data(contentsOf: fileURL) else {
             task.didFailWithError(URLError(.fileDoesNotExist)); return
         }

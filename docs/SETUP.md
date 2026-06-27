@@ -60,6 +60,26 @@ Decide the normalization policy here before building M1 features on top (see CLA
 Saving/dirty-state, undo wiring, native menus, find & replace, Quick Look — those are
 M1+ in `docs/PLAN.md`. M0 is intentionally just the bridge.
 
+## Quick Look (preview + thumbnail)
+
+The two extensions build and embed into `Glyph.app/Contents/PlugIns/`, but macOS only
+**activates** Quick Look app extensions from a properly **signed** app in **/Applications**:
+
+```sh
+# build, copy to /Applications, then launch once so the system registers the extensions
+xcodebuild -project Glyph.xcodeproj -scheme Glyph -configuration Release build
+cp -R <DerivedData>/Build/Products/Release/Glyph.app /Applications/
+open /Applications/Glyph.app
+pluginkit -m | grep -i glyph     # should now list the preview + thumbnail extensions
+```
+
+Then in Finder: select a `.md` file and press **space** (preview), and view it in a folder
+(thumbnail). Reliable activation really wants Developer ID signing — that's **M4**.
+
+Notes:
+- `qlmanage -p` cannot host app-extension previews (crashes in ExtensionFoundation); use Finder.
+- Ad-hoc builds in DerivedData are **not** discovered by `pluginkit` — install to /Applications.
+
 ## Troubleshooting
 
 - **Blank window** → the editor bundle wasn't built. Run `make web`, regenerate, rebuild.

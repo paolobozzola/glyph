@@ -153,8 +153,15 @@ In Swift: `extension UTType { static let markdown = UTType(importedAs: "net.dari
   opens, edit, ⌘S writes valid Markdown, ⌘Z undoes in the editor, toggle system appearance.
 - **M2 — Editor completeness + natives.** GFM features, slash menu, input rules, native
   menus/shortcuts, find & replace, spellcheck, printing, share menu, external-change reload.
-- **M3 — Quick Look.** Preview + thumbnail extensions on `GlyphRender`.
-- **M4 — Packaging.** AppIcon, signing, notarize, DMG, Sparkle.
+- **M3 — Quick Look. ✅ DONE (pending signed activation).** Two app-extension targets:
+  `GlyphQuickLookPreview` (WKWebView + bundled markdown-it over app://) and
+  `GlyphQuickLookThumbnail` (native CGContext text-on-page). Both build & embed in the app's
+  PlugIns. Preview renderer verified in a browser; thumbnail drawing verified via a bitmap
+  harness. **macOS only activates QL app extensions from a signed app installed in
+  /Applications — so live Finder behavior is verified at/after M4.** (`qlmanage -p` cannot
+  host app-extension previews; `qlmanage -t` falls back to the system text thumbnailer until
+  ours is activated.)
+- **M4 — Packaging.** Developer ID signing (activates the QL extensions), notarize, DMG, Sparkle.
 
 ## 9. First coding session = M0
 

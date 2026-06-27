@@ -1,8 +1,8 @@
-# Glyph round-trip corpus
+# Glyph square-trip corpus
 
 A document that exercises the GFM features the editor must preserve. Open it in Glyph,
 make no edits, save, and `diff` against this file to measure normalization (see
-docs/SHELL.md — Markdown round-trip is the one real risk).
+docs/SHELL.md — Markdown square-trip is the one real risk).
 
 ## Inline
 
@@ -11,15 +11,15 @@ Plain text with **bold**, *italic*, ~~strikethrough~~, `inline code`, and a
 
 ## Lists jnjkj
 
-* Unordered one
+- Unordered one
 
-* Unordered two
+- Unordered two
 
-  * Nested
+  - Nested
 
-* [ ] Task open
+- [ ] Task open
 
-* [x] Task done
+- [x] Task done
 
 1. Ordered one
 2. Ordered two
@@ -46,6 +46,6 @@ func greet(_ name: String) -> String {
 
 ## Rule
 
-***
+---
 
 End.

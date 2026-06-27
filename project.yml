@@ -28,6 +28,11 @@ targets:
       - path: Glyph/Resources/editor
         type: folder
         buildPhase: resources
+    dependencies:
+      - target: GlyphQuickLookPreview
+        embed: true
+      - target: GlyphQuickLookThumbnail
+        embed: true
     settings:
       base:
         GENERATE_INFOPLIST_FILE: NO
@@ -38,3 +43,41 @@ targets:
         ENABLE_HARDENED_RUNTIME: YES
         CODE_SIGN_STYLE: Automatic
         COMBINE_HIDPI_IMAGES: YES
+
+  # ---- Quick Look preview extension (spacebar preview) ----
+  GlyphQuickLookPreview:
+    type: app-extension
+    platform: macOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: QuickLook/Preview
+        excludes:
+          - "Info.plist"
+      - Glyph/AppSchemeHandler.swift           # shared with the app
+      - path: QuickLook/Resources/preview      # markdown-it bundle (make web)
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: QuickLook/Preview/Info.plist
+        PRODUCT_NAME: GlyphQuickLookPreview
+        PRODUCT_BUNDLE_IDENTIFIER: com.paolobozzola.glyph.QuickLookPreview
+        CODE_SIGN_STYLE: Automatic
+
+  # ---- Quick Look thumbnail extension (Finder thumbnails) ----
+  GlyphQuickLookThumbnail:
+    type: app-extension
+    platform: macOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: QuickLook/Thumbnail
+        excludes:
+          - "Info.plist"
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: QuickLook/Thumbnail/Info.plist
+        PRODUCT_NAME: GlyphQuickLookThumbnail
+        PRODUCT_BUNDLE_IDENTIFIER: com.paolobozzola.glyph.QuickLookThumbnail
+        CODE_SIGN_STYLE: Automatic
