@@ -6,7 +6,7 @@ live rich-text rendering while the file on disk stays plain, portable Markdown.
 - **Name:** Glyph
 - **Owner:** paolobozzola (paolo.bozzola@moviri.com)
 - **Repo:** github.com/paolobozzola/glyph (private initially)
-- **Status:** Planning. No application code yet — see `docs/PLAN.md`.
+- **Status:** M0 (bridge spike) scaffolded — build/run via `docs/SETUP.md`. Roadmap in `docs/PLAN.md`.
 
 ## Product principle
 

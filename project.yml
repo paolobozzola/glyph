@@ -1,0 +1,40 @@
+# XcodeGen spec — generates Glyph.xcodeproj.
+#   brew install xcodegen   then   make   (see docs/SETUP.md)
+name: Glyph
+options:
+  bundleIdPrefix: com.paolobozzola
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"          # Swift 5 language mode for M0; move to 6 later
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  Glyph:
+    type: application
+    platform: macOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: Glyph
+        excludes:
+          - "Info.plist"
+          - "Resources"
+      # The built editor bundle as a folder reference -> Resources/editor/
+      # (produced by `make web`; must exist before generating/building).
+      - path: Glyph/Resources/editor
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Glyph/Info.plist
+        PRODUCT_NAME: Glyph
+        PRODUCT_BUNDLE_IDENTIFIER: com.paolobozzola.glyph
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Automatic
+        COMBINE_HIDPI_IMAGES: YES
