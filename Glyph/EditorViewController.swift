@@ -105,6 +105,36 @@ final class EditorViewController: NSViewController, WKScriptMessageHandler, NSWi
         webView.evaluateJavaScript("window.glyph.cmd('redo')")
     }
 
+    // MARK: - Formatting commands (Format menu)
+
+    /// Format-menu items carry their command name (e.g. "bold", "heading:2") in
+    /// `representedObject`; route it to the editor.
+    @objc func glyphCommand(_ sender: NSMenuItem) {
+        guard let name = sender.representedObject as? String else { return }
+        let escaped = name.replacingOccurrences(of: "'", with: "\\'")
+        webView.evaluateJavaScript("window.glyph.cmd('\(escaped)')")
+    }
+
+    // MARK: - Print
+
+    @objc func printDocument(_ sender: Any?) {
+        guard let window = view.window else { return }
+        let printInfo = NSPrintInfo.shared
+        let operation = webView.printOperation(with: printInfo)
+        operation.showsPrintPanel = true
+        operation.view?.frame = webView.bounds
+        operation.runModal(for: window, delegate: nil, didRun: nil, contextInfo: nil)
+    }
+
+    // MARK: - Share
+
+    @objc func shareDocument(_ sender: Any?) {
+        guard let contentView = view.window?.contentView else { return }
+        let items: [Any] = document?.fileURL.map { [$0] } ?? [document?.text ?? ""]
+        let picker = NSSharingServicePicker(items: items)
+        picker.show(relativeTo: .zero, of: contentView, preferredEdge: .minY)
+    }
+
     // MARK: - NSWindowDelegate
 
     func windowDidBecomeKey(_ notification: Notification) {

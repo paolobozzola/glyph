@@ -9,13 +9,17 @@ docs/SHELL.md — Markdown round-trip is the one real risk).
 Plain text with **bold**, *italic*, ~~strikethrough~~, `inline code`, and a
 [link](https://example.com).
 
-## Lists
+## Lists jnjkj
 
-- Unordered one
-- Unordered two
-  - Nested
-- [ ] Task open
-- [x] Task done
+* Unordered one
+
+* Unordered two
+
+  * Nested
+
+* [ ] Task open
+
+* [x] Task done
 
 1. Ordered one
 2. Ordered two
@@ -42,6 +46,6 @@ func greet(_ name: String) -> String {
 
 ## Rule
 
----
+***
 
 End.

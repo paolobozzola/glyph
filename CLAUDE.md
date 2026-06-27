@@ -6,8 +6,9 @@ live rich-text rendering while the file on disk stays plain, portable Markdown.
 - **Name:** Glyph
 - **Owner:** paolobozzola (paolo.bozzola@moviri.com)
 - **Repo:** github.com/paolobozzola/glyph (private initially)
-- **Status:** M1 (real documents) built — open/save, autosave+Versions, tabs, recent files,
-  light/dark, external-change reload. Build/run via `docs/SETUP.md`; roadmap in `docs/PLAN.md`.
+- **Status:** M2 in progress — Format menu (bold/italic/headings/lists/quote/code/table/hr,
+  commands verified via Playwright), Spelling submenu, Printing (⌘P), Share menu. Find &
+  replace still TODO. Build/run via `docs/SETUP.md`; roadmap in `docs/PLAN.md`.
 
 ## Product principle
 
@@ -47,11 +48,17 @@ TextKit (editor too costly to hand-build) and Tauri/Electron (not Mac-idiomatic 
 - Native menu/shortcuts (Cmd+B/I, headings, save) call editor commands over the bridge.
 - ProseMirror owns undo/redo (Cmd+Z routed to it, not native).
 
-## Known risk to manage early
+## Markdown round-trip — policy (decided at M2)
 
-**Markdown round-trip fidelity.** Milkdown normalizes some syntax (list markers `*`↔`-`,
-wrapping, trailing whitespace). Policy: **normalize on save, rules explicit/configurable.**
-Validate against a corpus of real `.md` files *before* building features on top.
+Milkdown re-serializes via remark, so saving normalizes. We configure
+`remarkStringifyOptionsCtx` in the editor bundle: **`bullet: "-"`, `rule: "-"`,
+`listItemIndent: "one"`**. Accepted residual normalization (Milkdown AST behavior, not
+configurable via stringify options):
+- Lists serialize **loose** (blank line between items).
+- A freshly-inserted **empty** table cell / hr renders `<br />` until typed into.
+
+This is deterministic; treat it as Glyph's canonical formatting. Verified with Playwright
+against the built bundle (commands + round-trip).
 
 ## Brand
 

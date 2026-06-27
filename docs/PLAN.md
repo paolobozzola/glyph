@@ -52,9 +52,11 @@ over a custom `app://` scheme handler.
 - [ ] **Quick Look thumbnail** — Finder shows rendered `.md` thumbnails (Thumbnail extension target)
 - [x] **Document Versions + autosave-in-place** — `NSDocument.autosavesInPlace`; Revert to Saved
 - [x] **Window & state restoration** — native window tabbing; system reopen-on-relaunch
-- [ ] **System text services in editor** — spellcheck/autocorrect, Emoji & Symbols (⌃⌘Space), Look Up, dictation
-- [ ] **Printing (⌘P)** — print rendered document (shares pipeline with PDF export)
-- [ ] **Share menu** — `NSSharingServicePicker` for Markdown/HTML/PDF
+- [x] **System text services in editor** — Spelling & Grammar submenu; Emoji/Look Up/dictation via WKWebView
+- [x] **Printing (⌘P)** — `WKWebView.printOperation`
+- [x] **Share menu** — `NSSharingServicePicker`
+- [x] **Format menu** — bold/italic/strike/code/link, headings 1–6, lists, quote, code block, hr, table
+- [ ] **Find & replace** — needs an in-editor search UI (ProseMirror); deferred to next pass
 
 ### v1.x — polish
 - [ ] Image handling: paste/drag → save to sibling assets folder, insert relative link
