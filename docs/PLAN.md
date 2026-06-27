@@ -69,9 +69,9 @@ over a custom `app://` scheme handler.
 
 ## 4. Logo / brand
 
-- **Concept:** a letterform with a cursor — an open ring "G" with a gold text-caret bar
-  sitting in the opening. Reads as "G" + the blinking insertion point of a text editor.
-  Theme: inscription / illuminated letter (the carved/illuminated *glyph*).
+- **Concept:** a single "G" — a clean ink bowl (a C) whose defining **crossbar** is struck
+  in gold. The gold is precisely the stroke that turns the C into a G. Theme: inscription /
+  illuminated letter (the carved/illuminated *glyph*).
 - **Palette:** ink `#1A1822`, illuminated gold `#E6B450`, paper `#F5F1E8`, muted `#6B6678`.
 - **Assets:** `assets/logo/` — `glyph-mark-dark.svg`, `glyph-mark-light.svg`.
 - **Next:** export `.icns` (16→1024 px) from the squircle tile for the app target.

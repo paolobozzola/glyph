@@ -44,7 +44,7 @@ Validate against a corpus of real `.md` files *before* building features on top.
 
 ## Brand
 
-- Mark: an open ring "G" with a gold text-caret bar sitting in its opening — a letterform
-  with a cursor. Theme: inscription / illuminated letter.
+- Mark: a single "G" — a clean ink bowl whose defining crossbar is struck in gold. The
+  gold is the stroke that turns the C into a G. Theme: inscription / illuminated letter.
 - Palette: ink `#1A1822`, illuminated gold `#E6B450`, paper `#F5F1E8`, muted `#6B6678`.
 - Assets in `assets/logo/`.
