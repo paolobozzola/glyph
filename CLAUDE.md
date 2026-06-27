@@ -22,8 +22,18 @@ JSON) to disk — only Markdown.
 | Editing engine | **Milkdown** (ProseMirror + remark) in a `WKWebView` | Only mainstream web editor that is Markdown-first; faithful round-trip via remark |
 | Markdown flavor | CommonMark + GFM (`remark-gfm`) | Tables, task lists, strikethrough, autolinks |
 | Editor bundle | Vite build, bundled in-app, loaded via custom `WKURLSchemeHandler` (`app://`) | No network at runtime; avoids `file://` WebKit restrictions |
-| Quick Look | Quick Look Preview Extension (separate app extension target) | Spacebar preview of `.md` in Finder |
+| Deployment target | **macOS 15 Sequoia** minimum | Modern SwiftUI APIs, reasonable reach |
+| Document model | SwiftUI `DocumentGroup` + **`ReferenceFileDocument`** (class) | Mutable editing model; gives autosave-in-place, Versions, tabs, state restoration |
+| Quick Look | Two app-extension targets: **Preview** + **Thumbnail** | Spacebar preview *and* rendered Finder thumbnails |
+| Shared rendering | Local Swift package **`GlyphRender`** (Markdown→styled HTML) used by app + both QL extensions | One renderer, consistent look everywhere |
 | Distribution | Developer ID + notarize + staple, DMG; Sparkle for updates | Direct download, no sandbox → full filesystem access |
+
+### MVP native macOS features (all in)
+File-type association / default-app (Markdown UTI) · Document Versions + autosave-in-place ·
+window/state restoration · in-editor system text services (spellcheck, emoji picker, Look Up,
+dictation) · Printing (⌘P) · Quick Look **preview** + **thumbnail** · Share menu
+(`NSSharingServicePicker`). Deferred to v1.x: Spotlight indexing, App Intents/Shortcuts,
+system Services provider, iCloud (needs sandbox — conflicts with direct-download).
 
 Architecture chosen: **hybrid** (native shell + embedded web engine). Rejected pure-native
 TextKit (editor too costly to hand-build) and Tauri/Electron (not Mac-idiomatic enough).

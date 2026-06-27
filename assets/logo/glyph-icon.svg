@@ -1,0 +1,11 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Glyph app icon">
+  <!-- macOS icon grid: rounded square inset with transparent margin -->
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="#1A1822"/>
+  <g transform="translate(102.4,102.4) scale(1.6)">
+    <!-- the bowl: a C opening wide on the right -->
+    <path d="M 329.9 161.4 A 120 120 0 1 0 372.4 285"
+          fill="none" stroke="#F5F1E8" stroke-width="46" stroke-linecap="round"/>
+    <!-- the gold crossbar: the stroke that makes it a G -->
+    <rect x="256" y="233" width="116" height="46" rx="23" fill="#E6B450"/>
+  </g>
+</svg>

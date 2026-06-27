@@ -19,5 +19,6 @@ rich-text rendering — while the file on disk stays plain, portable Markdown.
 ```
 CLAUDE.md          Locked stack decisions, bridge contract, project memory
 docs/PLAN.md       Roadmap, architecture, feature set, build order
-assets/logo/       Brand marks (SVG)
+docs/SHELL.md      Shell build spec: targets, document model, bridge, milestones
+assets/logo/       Brand marks (SVG) + AppIcon.icns / .iconset
 ```

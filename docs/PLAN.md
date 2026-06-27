@@ -43,10 +43,18 @@ over a custom `app://` scheme handler.
 - [ ] Light/dark following the system; a couple of editor themes/fonts
 - [ ] Find & replace
 - [ ] Auto-save + dirty-state + external-change detection (reload prompt if file changed on disk)
-- [ ] **macOS Quick Look integration** — spacebar in Finder previews `.md` rendered
-      (Quick Look Preview Extension target; renders Markdown → styled HTML)
-- [ ] **App logo / icon** (see §4) wired into `.icns` and the app target
-- [ ] **GitHub repo** `paolobozzola/glyph`, private initially (see §5)
+- [ ] **App logo / icon** (see §4) wired into `.icns` and the app target — *done, in `assets/logo/`*
+- [ ] **GitHub repo** `paolobozzola/glyph`, private initially (see §5) — *done*
+
+#### MVP native macOS features
+- [ ] **File-type association / default app** — declare Markdown UTI; double-click & "Open With" → Glyph
+- [ ] **Quick Look preview** — spacebar in Finder renders `.md` (Preview extension target)
+- [ ] **Quick Look thumbnail** — Finder shows rendered `.md` thumbnails (Thumbnail extension target)
+- [ ] **Document Versions + autosave-in-place** — "Revert To › Browse All Versions", Time Machine
+- [ ] **Window & state restoration** — reopen the docs/tabs that were open at quit
+- [ ] **System text services in editor** — spellcheck/autocorrect, Emoji & Symbols (⌃⌘Space), Look Up, dictation
+- [ ] **Printing (⌘P)** — print rendered document (shares pipeline with PDF export)
+- [ ] **Share menu** — `NSSharingServicePicker` for Markdown/HTML/PDF
 
 ### v1.x — polish
 - [ ] Image handling: paste/drag → save to sibling assets folder, insert relative link
