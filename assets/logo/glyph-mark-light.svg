@@ -1,6 +1,6 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Glyph mark">
   <!-- the bowl: a C open at the mouth -->
-  <path d="M 372.4 227 A 120 120 0 1 0 372.4 285"
+  <path d="M 329.9 161.4 A 120 120 0 1 0 372.4 285"
         fill="none" stroke="#1A1822" stroke-width="46" stroke-linecap="round"/>
   <!-- the gold crossbar: the stroke that makes it a G -->
   <rect x="256" y="233" width="116" height="46" rx="23" fill="#E6B450"/>
