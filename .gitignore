@@ -24,3 +24,6 @@ Glyph/Resources/editor/
 *.cer
 *.provisionprofile
 .env
+
+# Playwright MCP scratch output
+.playwright-mcp/
