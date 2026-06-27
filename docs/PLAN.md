@@ -47,11 +47,11 @@ over a custom `app://` scheme handler.
 - [ ] **GitHub repo** `paolobozzola/glyph`, private initially (see §5) — *done*
 
 #### MVP native macOS features
-- [ ] **File-type association / default app** — declare Markdown UTI; double-click & "Open With" → Glyph
+- [x] **File-type association / default app** — declare Markdown UTI; double-click & "Open With" → Glyph
 - [ ] **Quick Look preview** — spacebar in Finder renders `.md` (Preview extension target)
 - [ ] **Quick Look thumbnail** — Finder shows rendered `.md` thumbnails (Thumbnail extension target)
-- [ ] **Document Versions + autosave-in-place** — "Revert To › Browse All Versions", Time Machine
-- [ ] **Window & state restoration** — reopen the docs/tabs that were open at quit
+- [x] **Document Versions + autosave-in-place** — `NSDocument.autosavesInPlace`; Revert to Saved
+- [x] **Window & state restoration** — native window tabbing; system reopen-on-relaunch
 - [ ] **System text services in editor** — spellcheck/autocorrect, Emoji & Symbols (⌃⌘Space), Look Up, dictation
 - [ ] **Printing (⌘P)** — print rendered document (shares pipeline with PDF export)
 - [ ] **Share menu** — `NSSharingServicePicker` for Markdown/HTML/PDF
