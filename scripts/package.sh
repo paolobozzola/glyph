@@ -40,10 +40,14 @@ APP="$BUILT_DIR/$PRODUCT"
 echo "  app: $APP"
 
 echo "▶ Signing inside-out with hardened runtime + secure timestamp…"
+QL_ENTITLEMENTS="$ROOT/QuickLook/Glyph-QuickLook.entitlements"
 while IFS= read -r -d '' ext; do
-  echo "  sign $(basename "$ext")"
-  codesign --force --options runtime --timestamp --sign "$DEV_ID" "$ext"
+  echo "  sign $(basename "$ext")  (sandboxed)"
+  # Quick Look extensions MUST be sandboxed or the host won't activate them.
+  codesign --force --options runtime --timestamp \
+    --entitlements "$QL_ENTITLEMENTS" --sign "$DEV_ID" "$ext"
 done < <(find "$APP/Contents/PlugIns" -maxdepth 1 -name '*.appex' -print0 2>/dev/null)
+# The host app stays non-sandboxed (direct download → full filesystem access).
 codesign --force --options runtime --timestamp --sign "$DEV_ID" "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
 echo "▶ Gatekeeper assessment (pre-notarization, may say rejected until stapled):"

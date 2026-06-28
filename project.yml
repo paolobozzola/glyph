@@ -67,6 +67,7 @@ targets:
         PRODUCT_NAME: GlyphQuickLookPreview
         PRODUCT_BUNDLE_IDENTIFIER: com.paolobozzola.glyph.QuickLookPreview
         CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: QuickLook/Glyph-QuickLook.entitlements
 
   # ---- Quick Look thumbnail extension (Finder thumbnails) ----
   GlyphQuickLookThumbnail:
@@ -84,3 +85,4 @@ targets:
         PRODUCT_NAME: GlyphQuickLookThumbnail
         PRODUCT_BUNDLE_IDENTIFIER: com.paolobozzola.glyph.QuickLookThumbnail
         CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: QuickLook/Glyph-QuickLook.entitlements
