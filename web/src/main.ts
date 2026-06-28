@@ -1,7 +1,7 @@
 import { Crepe } from "@milkdown/crepe";
 import { callCommand, $prose, getHTML } from "@milkdown/kit/utils";
 import { undoCommand, redoCommand } from "@milkdown/kit/plugin/history";
-import { remarkStringifyOptionsCtx, editorViewCtx } from "@milkdown/kit/core";
+import { remarkStringifyOptionsCtx, editorViewCtx, commandsCtx } from "@milkdown/kit/core";
 import {
   search,
   setSearchState,
@@ -96,13 +96,60 @@ function postToHost(msg: unknown): void {
   window.webkit?.messageHandlers?.glyph?.postMessage(msg);
 }
 
+// --- selection-toolbar heading buttons -----------------------------------
+// Adds H1/H2/H3 to Crepe's floating formatting toolbar. `ctx` is the live editor
+// context the toolbar passes to each item's active/onRun callbacks.
+
+function headingLevelAt(ctx: any): number {
+  const { $from } = ctx.get(editorViewCtx).state.selection;
+  for (let d = $from.depth; d >= 1; d--) {
+    const node = $from.node(d);
+    if (node.type.name === "heading") return node.attrs.level || 1;
+    if (node.type.name === "paragraph") return 0;
+  }
+  return 0;
+}
+
+function callCmd(ctx: any, command: { key?: unknown }, payload?: unknown): void {
+  if (command.key != null) ctx.get(commandsCtx).call(command.key, payload);
+}
+
+function setHeadingLevel(ctx: any, level: number): void {
+  // Clicking the current level toggles back to body text.
+  if (headingLevelAt(ctx) === level) callCmd(ctx, turnIntoTextCommand);
+  else callCmd(ctx, wrapInHeadingCommand, level);
+}
+
+function headingIcon(label: string): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">` +
+    `<text x="12" y="16" text-anchor="middle" font-size="11" font-weight="700" ` +
+    `fill="currentColor" font-family="-apple-system,system-ui,sans-serif">${label}</text></svg>`;
+}
+
+function buildHeadingToolbar(builder: any): void {
+  const group = builder.addGroup("glyph-heading", "Heading");
+  for (const level of [1, 2, 3]) {
+    group.addItem(`h${level}`, {
+      icon: headingIcon(`H${level}`),
+      active: (ctx: any) => headingLevelAt(ctx) === level,
+      onRun: (ctx: any) => setHeadingLevel(ctx, level),
+    });
+  }
+}
+
 async function mount(markdown: string): Promise<void> {
   if (crepe) {
     await crepe.destroy();
     crepe = null;
   }
   lastMarkdown = markdown;
-  crepe = new Crepe({ root, defaultValue: markdown });
+  crepe = new Crepe({
+    root,
+    defaultValue: markdown,
+    featureConfigs: {
+      [Crepe.Feature.Toolbar]: { buildToolbar: buildHeadingToolbar },
+    },
+  });
   // Tame Markdown normalization: dash bullets and thematic breaks, compact indent.
   try {
     crepe.editor.config((ctx) => {
@@ -118,7 +165,6 @@ async function mount(markdown: string): Promise<void> {
   }
   crepe.editor.use($prose(() => search()));        // find & replace engine
   crepe.editor.use($prose(() => focusPlugin()));    // focus / typewriter mode
-  crepe.editor.use($prose(() => styleWatchPlugin())); // paragraph-style selector sync
   await crepe.create();
   ensureChrome();
   ensureImageHandlers();
@@ -459,14 +505,7 @@ const CHROME_CSS = `
   padding:0 16px;font:12px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
   color:#6b6678;background:rgba(245,241,232,.85);border-top:1px solid rgba(0,0,0,.07);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);}
-.glyph-status-left{display:flex;align-items:center;gap:12px;}
 .glyph-count{font-variant-numeric:tabular-nums;letter-spacing:.01em;}
-.glyph-style{appearance:none;-webkit-appearance:none;border:1px solid rgba(0,0,0,.14);
-  border-radius:7px;background:transparent;color:#1a1822;font:inherit;font-weight:550;
-  padding:3px 22px 3px 9px;cursor:pointer;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%236b6678'/></svg>");
-  background-repeat:no-repeat;background-position:right 8px center;}
-.glyph-style:hover{background-color:rgba(0,0,0,.05);}
 .glyph-status-actions{display:flex;gap:8px;}
 .glyph-status button{border:0;background:transparent;color:#6b6678;
   border-radius:7px;padding:5px 11px;cursor:pointer;font:inherit;font-weight:550;
@@ -501,9 +540,6 @@ const CHROME_CSS = `
 @keyframes glyph-flash{0%{background:rgba(230,180,80,.45);}100%{background:transparent;}}
 .glyph-flash{animation:glyph-flash 1s ease;border-radius:4px;}
 [data-theme=dark] .glyph-status{background:rgba(35,32,48,.82);color:#9a93a8;border-top-color:rgba(255,255,255,.08);}
-[data-theme=dark] .glyph-style{color:#e8e6ef;border-color:rgba(255,255,255,.18);}
-[data-theme=dark] .glyph-style:hover{background-color:rgba(255,255,255,.09);}
-[data-theme=dark] .glyph-style option{background:#232030;color:#e8e6ef;}
 [data-theme=dark] .glyph-status button{color:#9a93a8;}
 [data-theme=dark] .glyph-status button:hover{background:rgba(255,255,255,.09);color:#e8e6ef;}
 [data-theme=dark] .glyph-status button.on{background:rgba(230,180,80,.2);color:#e6b450;}
@@ -520,37 +556,6 @@ let outlineListEl: HTMLElement;
 let outlineBtn: HTMLButtonElement;
 let focusBtn: HTMLButtonElement;
 let sourceBtn: HTMLButtonElement | undefined;
-let styleSel: HTMLSelectElement | undefined;
-
-// --- paragraph-style selector --------------------------------------------
-// A dropdown reflecting the current block's style (Body / Heading 1–6) that
-// changes the block when picked, kept in sync with the cursor position.
-
-function styleWatchPlugin(): Plugin {
-  return new Plugin({
-    view() {
-      return { update: (view) => updateStyleSelector(view) };
-    },
-  });
-}
-
-function updateStyleSelector(view: any): void {
-  if (!styleSel || sourceMode) return;
-  const { $from } = view.state.selection;
-  let value = "p";
-  for (let d = $from.depth; d >= 1; d--) {
-    const node = $from.node(d);
-    if (node.type.name === "heading") { value = `h${node.attrs.level || 1}`; break; }
-    if (node.type.name === "paragraph") { value = "p"; break; }
-  }
-  if (styleSel.value !== value) styleSel.value = value;
-}
-
-function applyStyle(value: string): void {
-  if (value === "p") runCommand("paragraph");
-  else if (/^h[1-6]$/.test(value)) runCommand(`heading:${value.slice(1)}`);
-  getView()?.focus();
-}
 
 // --- help / cheat sheet --------------------------------------------------
 
@@ -689,18 +694,7 @@ function ensureChrome(): void {
   const status = document.createElement("div");
   status.className = "glyph-status";
   status.innerHTML = `
-    <span class="glyph-status-left">
-      <select class="glyph-style" title="Paragraph style">
-        <option value="p">Body</option>
-        <option value="h1">Heading 1</option>
-        <option value="h2">Heading 2</option>
-        <option value="h3">Heading 3</option>
-        <option value="h4">Heading 4</option>
-        <option value="h5">Heading 5</option>
-        <option value="h6">Heading 6</option>
-      </select>
-      <span class="glyph-count"></span>
-    </span>
+    <span class="glyph-count"></span>
     <span class="glyph-status-actions">
       <button data-act="source">Markdown</button>
       <button data-act="outline">Outline</button>
@@ -708,8 +702,6 @@ function ensureChrome(): void {
     </span>`;
   document.body.appendChild(status);
   countEl = status.querySelector(".glyph-count") as HTMLElement;
-  styleSel = status.querySelector(".glyph-style") as HTMLSelectElement;
-  styleSel.addEventListener("change", () => applyStyle(styleSel!.value));
   outlineBtn = status.querySelector('[data-act="outline"]') as HTMLButtonElement;
   focusBtn = status.querySelector('[data-act="focus"]') as HTMLButtonElement;
   sourceBtn = status.querySelector('[data-act="source"]') as HTMLButtonElement;
