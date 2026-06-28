@@ -23,6 +23,7 @@ import {
   wrapInBlockquoteCommand,
   createCodeBlockCommand,
   insertHrCommand,
+  insertImageCommand,
 } from "@milkdown/kit/preset/commonmark";
 import { toggleStrikethroughCommand, insertTableCommand } from "@milkdown/kit/preset/gfm";
 import { Plugin, TextSelection } from "@milkdown/kit/prose/state";
@@ -57,6 +58,7 @@ type Bridge = {
   setTheme: (mode: ThemeMode) => void;
   cmd: (name: string) => void;
   exportHTML: () => string;
+  imageSaved: (id: number, path: string | null) => void;
 };
 
 declare global {
@@ -118,6 +120,7 @@ async function mount(markdown: string): Promise<void> {
   crepe.editor.use($prose(() => focusPlugin()));    // focus / typewriter mode
   await crepe.create();
   ensureChrome();
+  ensureImageHandlers();
   updateCount();
   refreshOutlineIfOpen();
   crepe.on((listener) => {
@@ -166,6 +169,83 @@ function getView(): any {
   } catch {
     return null;
   }
+}
+
+// --- image paste / drag --------------------------------------------------
+// Intercept image files, hand the bytes to the host (which saves them next to the
+// document and returns a relative path), then insert a Markdown image.
+
+let imgSeq = 0;
+const pendingImages = new Map<number, (path: string | null) => void>();
+
+function saveImageViaHost(base64: string, mime: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const id = ++imgSeq;
+    pendingImages.set(id, resolve);
+    postToHost({ type: "saveImage", id, base64, mime });
+    setTimeout(() => {
+      if (pendingImages.has(id)) { pendingImages.delete(id); resolve(null); }
+    }, 20000);
+  });
+}
+
+function fileToBase64(file: File): Promise<{ base64: string; mime: string }> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const res = String(reader.result); // data:<mime>;base64,XXXX
+      resolve({ base64: res.slice(res.indexOf(",") + 1), mime: file.type || "image/png" });
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function insertImageSrc(src: string): void {
+  const cmd = insertImageCommand as unknown as {
+    run?: (p: unknown) => unknown; key?: unknown;
+  };
+  if (typeof cmd.run === "function") {
+    cmd.run({ src });
+  } else if (crepe && cmd.key != null) {
+    crepe.editor.action(callCommand(cmd.key as never, { src } as never));
+  }
+}
+
+async function handleImageFiles(files: File[]): Promise<void> {
+  for (const file of files) {
+    if (!file.type.startsWith("image/")) continue;
+    try {
+      const { base64, mime } = await fileToBase64(file);
+      const path = await saveImageViaHost(base64, mime);
+      if (path) insertImageSrc(path);
+    } catch {
+      /* skip a file that fails to read/save */
+    }
+  }
+}
+
+function imageFilesFrom(dt: DataTransfer | null): File[] {
+  if (!dt || !dt.files) return [];
+  return Array.from(dt.files).filter((f) => f.type.startsWith("image/"));
+}
+
+let imageHandlersReady = false;
+function ensureImageHandlers(): void {
+  if (imageHandlersReady) return;
+  imageHandlersReady = true;
+  // Capture phase so we pre-empt the editor's own paste/drop handling.
+  root.addEventListener("paste", (e) => {
+    const files = imageFilesFrom((e as ClipboardEvent).clipboardData);
+    if (files.length) { e.preventDefault(); e.stopPropagation(); void handleImageFiles(files); }
+  }, true);
+  root.addEventListener("dragover", (e) => {
+    if ((e as DragEvent).dataTransfer?.types?.includes("Files")) e.preventDefault();
+  }, true);
+  root.addEventListener("drop", (e) => {
+    const files = imageFilesFrom((e as DragEvent).dataTransfer);
+    if (files.length) { e.preventDefault(); e.stopPropagation(); void handleImageFiles(files); }
+  }, true);
 }
 
 // --- outline · word count · focus mode -----------------------------------
@@ -690,6 +770,10 @@ window.glyph = {
       `<meta name="viewport" content="width=device-width, initial-scale=1">` +
       `<style>${exportCss}</style></head>` +
       `<body class="markdown-body">${body}</body></html>`;
+  },
+  imageSaved: (id, path) => {
+    const resolve = pendingImages.get(id);
+    if (resolve) { pendingImages.delete(id); resolve(path); }
   },
 };
 

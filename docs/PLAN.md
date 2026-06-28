@@ -59,7 +59,7 @@ over a custom `app://` scheme handler.
 - [x] **Find & replace** — in-editor find bar (prosemirror-search): ⌘F / ⌥⌘F / ⌘G / ⇧⌘G, match count, highlights, replace + replace-all
 
 ### v1.x — polish
-- [ ] Image handling: paste/drag → save to sibling assets folder, insert relative link
+- [x] Image handling: paste/drag → save to `<doc>.assets/`, insert relative link (app:// serves doc-dir assets)
 - [x] Export to HTML and PDF (File ▸ Export; Milkdown `getHTML` + offscreen print-to-PDF)
 - [x] Word/char count (status bar), outline/TOC panel, focus / typewriter mode (View menu)
 - [ ] Source ⇄ WYSIWYG toggle (raw-Markdown view for power users)

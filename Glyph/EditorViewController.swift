@@ -23,7 +23,12 @@ final class EditorViewController: NSViewController, WKScriptMessageHandler, WKNa
 
     override func loadView() {
         let configuration = WKWebViewConfiguration()
-        configuration.setURLSchemeHandler(AppSchemeHandler(), forURLScheme: "app")
+        // Serve the editor bundle, plus images saved next to the open document.
+        let handler = AppSchemeHandler(subdirectory: "editor", bundle: .main,
+                                       assetDirectory: { [weak self] in
+            self?.document?.fileURL?.deletingLastPathComponent()
+        })
+        configuration.setURLSchemeHandler(handler, forURLScheme: "app")
         // Weak proxy: WKUserContentController retains its handler, which would
         // otherwise create a cycle (controller → self → webView → config → controller)
         // and keep the editor/web view alive after the window closes.
@@ -77,8 +82,81 @@ final class EditorViewController: NSViewController, WKScriptMessageHandler, WKNa
                 document?.text = markdown
                 document?.updateChangeCount(.changeDone)
             }
+        case "saveImage":
+            handleSaveImage(body)
         default:
             break
+        }
+    }
+
+    // MARK: - Image paste / drag
+
+    /// Save a pasted/dropped image next to the document and reply with its relative path.
+    private func handleSaveImage(_ body: [String: Any]) {
+        let id = body["id"] as? Int ?? -1
+        guard let base64 = body["base64"] as? String,
+              let data = Data(base64Encoded: base64) else {
+            replyImage(id: id, path: nil); return
+        }
+        let mime = body["mime"] as? String ?? "image/png"
+
+        guard let docURL = document?.fileURL else {
+            warnSaveBeforeImages()
+            replyImage(id: id, path: nil)
+            return
+        }
+
+        let dir = docURL.deletingLastPathComponent()
+        let baseName = docURL.deletingPathExtension().lastPathComponent
+        let assetsFolder = "\(baseName).assets"
+        let assetsDir = dir.appendingPathComponent(assetsFolder, isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: assetsDir, withIntermediateDirectories: true)
+            let fileName = "img-\(UUID().uuidString.prefix(8).lowercased()).\(Self.fileExtension(forMime: mime))"
+            try data.write(to: assetsDir.appendingPathComponent(fileName))
+            // Relative, percent-encoded path for portable Markdown.
+            let rel = "\(assetsFolder)/\(fileName)"
+            let encoded = rel.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? rel
+            replyImage(id: id, path: encoded)
+        } catch {
+            replyImage(id: id, path: nil)
+        }
+    }
+
+    private func replyImage(id: Int, path: String?) {
+        let arg: String
+        if let path,
+           let json = try? JSONSerialization.data(withJSONObject: [path]),
+           let str = String(data: json, encoding: .utf8) {
+            arg = "\(str)[0]"
+        } else {
+            arg = "null"
+        }
+        DispatchQueue.main.async { [weak self] in
+            self?.webView.evaluateJavaScript("window.glyph.imageSaved(\(id), \(arg))")
+        }
+    }
+
+    private func warnSaveBeforeImages() {
+        guard let window = view.window else { return }
+        let alert = NSAlert()
+        alert.messageText = "Save the document first"
+        alert.informativeText = "Glyph stores images in a folder next to your file, so the document needs to be saved before you can add images."
+        alert.addButton(withTitle: "OK")
+        alert.beginSheetModal(for: window)
+    }
+
+    private static func fileExtension(forMime mime: String) -> String {
+        switch mime.lowercased() {
+        case "image/png": return "png"
+        case "image/jpeg": return "jpg"
+        case "image/gif": return "gif"
+        case "image/webp": return "webp"
+        case "image/svg+xml": return "svg"
+        case "image/tiff": return "tiff"
+        case "image/bmp": return "bmp"
+        case "image/heic": return "heic"
+        default: return "png"
         }
     }
 
