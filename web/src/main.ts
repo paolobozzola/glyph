@@ -215,6 +215,8 @@ const CHROME_CSS = `
 .glyph-status button:hover{background:rgba(0,0,0,.06);color:#1a1822;}
 .glyph-status button.on{background:rgba(230,180,80,.22);color:#9a6a00;}
 .ProseMirror{padding-bottom:48px;}
+#app{transition:padding-left .2s ease;}
+.glyph-outline-on #app{padding-left:260px;}
 .glyph-outline{position:fixed;top:0;left:0;bottom:34px;z-index:9100;width:260px;
   background:rgba(245,241,232,.85);border-right:1px solid rgba(0,0,0,.08);overflow-y:auto;
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
@@ -298,7 +300,12 @@ function updateCount(): void {
   const text = view ? view.state.doc.textBetween(0, view.state.doc.content.size, " ", " ") : "";
   const words = (text.trim().match(/\S+/g) || []).length;
   const chars = text.length;
-  countEl.textContent = `${words} word${words === 1 ? "" : "s"} · ${chars} character${chars === 1 ? "" : "s"}`;
+  const parts = [
+    `${words.toLocaleString()} word${words === 1 ? "" : "s"}`,
+    `${chars.toLocaleString()} character${chars === 1 ? "" : "s"}`,
+  ];
+  if (words > 0) parts.push(`${Math.max(1, Math.round(words / 200))} min read`);
+  countEl.textContent = parts.join("  ·  ");
 }
 
 type Heading = { level: number; text: string; pos: number };
@@ -362,6 +369,8 @@ function toggleOutline(): void {
   ensureChrome();
   outlineEl.hidden = !outlineEl.hidden;
   outlineBtn?.classList.toggle("on", !outlineEl.hidden);
+  // Narrow the reading pane so the panel sits beside the text, not over it.
+  document.documentElement.classList.toggle("glyph-outline-on", !outlineEl.hidden);
   refreshOutlineIfOpen();
 }
 
