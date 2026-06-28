@@ -25,6 +25,8 @@ import {
   insertHrCommand,
 } from "@milkdown/kit/preset/commonmark";
 import { toggleStrikethroughCommand, insertTableCommand } from "@milkdown/kit/preset/gfm";
+import { Plugin, TextSelection } from "@milkdown/kit/prose/state";
+import { Decoration, DecorationSet } from "@milkdown/kit/prose/view";
 
 import "@milkdown/crepe/theme/common/style.css";
 import frameLight from "@milkdown/crepe/theme/frame.css?inline";
@@ -112,12 +114,18 @@ async function mount(markdown: string): Promise<void> {
   } catch {
     /* serializer config is best-effort; editor still works without it */
   }
-  crepe.editor.use($prose(() => search())); // find & replace engine
+  crepe.editor.use($prose(() => search()));        // find & replace engine
+  crepe.editor.use($prose(() => focusPlugin()));    // focus / typewriter mode
   await crepe.create();
+  ensureChrome();
+  updateCount();
+  refreshOutlineIfOpen();
   crepe.on((listener) => {
     listener.markdownUpdated((_ctx, md) => {
       if (md === lastMarkdown) return; // ignore initial render / no-op updates
       lastMarkdown = md;
+      updateCount();
+      refreshOutlineIfOpen();
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => postToHost({ type: "change", markdown: md }), DEBOUNCE_MS);
     });
@@ -160,6 +168,192 @@ function getView(): any {
   }
 }
 
+// --- outline · word count · focus mode -----------------------------------
+
+let focusMode = false;
+
+// Dims every top-level block except the one holding the selection (focus mode).
+function focusPlugin(): Plugin {
+  return new Plugin({
+    props: {
+      decorations(state) {
+        if (!focusMode) return null;
+        const { $from } = state.selection;
+        if ($from.depth < 1) return null;
+        const from = $from.before(1);
+        const to = $from.after(1);
+        return DecorationSet.create(state.doc, [
+          Decoration.node(from, to, { class: "glyph-active" }),
+        ]);
+      },
+    },
+    view() {
+      return {
+        update(view) {
+          if (!focusMode) return;
+          // Typewriter: keep the caret's block vertically centered.
+          const dom = view.domAtPos(view.state.selection.head).node as Node;
+          const el = dom.nodeType === 1 ? (dom as Element) : dom.parentElement;
+          el?.scrollIntoView({ block: "center", behavior: "smooth" });
+        },
+      };
+    },
+  });
+}
+
+const CHROME_CSS = `
+.glyph-status{position:fixed;left:0;right:0;bottom:0;z-index:9000;height:30px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:0 14px;font:12px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  color:#6b6678;background:rgba(245,241,232,.92);border-top:1px solid rgba(0,0,0,.08);
+  -webkit-backdrop-filter:saturate(180%) blur(8px);backdrop-filter:saturate(180%) blur(8px);}
+.glyph-status-actions{display:flex;gap:6px;}
+.glyph-status button{border:1px solid rgba(0,0,0,.15);background:transparent;color:inherit;
+  border-radius:6px;padding:2px 9px;cursor:pointer;font:inherit;line-height:1.3;}
+.glyph-status button:hover{background:rgba(0,0,0,.06);}
+.glyph-status button.on{background:#e6b450;border-color:#e6b450;color:#1a1822;}
+.ProseMirror{padding-bottom:42px;}
+.glyph-outline{position:fixed;top:0;left:0;bottom:30px;z-index:9100;width:248px;
+  background:rgba(245,241,232,.97);border-right:1px solid rgba(0,0,0,.1);overflow-y:auto;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  font:13px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;}
+.glyph-outline[hidden]{display:none;}
+.glyph-outline-head{padding:12px 14px 6px;font-weight:650;color:#1a1822;
+  letter-spacing:.04em;text-transform:uppercase;font-size:11px;}
+.glyph-outline a{display:block;padding:4px 14px;color:#1a1822;text-decoration:none;
+  cursor:pointer;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.glyph-outline a:hover{background:rgba(0,0,0,.06);}
+.glyph-outline a.lvl1{font-weight:600;}
+.glyph-outline a.lvl2{padding-left:26px;}
+.glyph-outline a.lvl3{padding-left:38px;color:#6b6678;}
+.glyph-outline a.lvl4,.glyph-outline a.lvl5,.glyph-outline a.lvl6{padding-left:50px;color:#6b6678;}
+.glyph-outline-empty{padding:6px 14px;color:#9a93a8;}
+.glyph-focus-on .ProseMirror>*{opacity:.3;transition:opacity .25s ease;}
+.glyph-focus-on .ProseMirror>.glyph-active{opacity:1;}
+.glyph-focus-on .ProseMirror{padding-top:42vh;padding-bottom:42vh;}
+[data-theme=dark] .glyph-status{background:rgba(35,32,48,.92);color:#9a93a8;border-top-color:rgba(255,255,255,.1);}
+[data-theme=dark] .glyph-status button{border-color:rgba(255,255,255,.18);}
+[data-theme=dark] .glyph-status button:hover{background:rgba(255,255,255,.1);}
+[data-theme=dark] .glyph-outline{background:rgba(35,32,48,.97);border-right-color:rgba(255,255,255,.12);}
+[data-theme=dark] .glyph-outline-head,[data-theme=dark] .glyph-outline a{color:#e8e6ef;}
+[data-theme=dark] .glyph-outline a:hover{background:rgba(255,255,255,.08);}
+[data-theme=dark] .glyph-outline a.lvl3,[data-theme=dark] .glyph-outline a.lvl4{color:#9a93a8;}
+`;
+
+let chromeReady = false;
+let countEl: HTMLElement;
+let outlineEl: HTMLElement;
+let outlineListEl: HTMLElement;
+let outlineBtn: HTMLButtonElement;
+let focusBtn: HTMLButtonElement;
+
+function ensureChrome(): void {
+  if (chromeReady) return;
+  chromeReady = true;
+
+  const style = document.createElement("style");
+  style.textContent = CHROME_CSS;
+  document.head.appendChild(style);
+
+  const status = document.createElement("div");
+  status.className = "glyph-status";
+  status.innerHTML = `
+    <span class="glyph-count"></span>
+    <span class="glyph-status-actions">
+      <button data-act="outline">Outline</button>
+      <button data-act="focus">Focus</button>
+    </span>`;
+  document.body.appendChild(status);
+  countEl = status.querySelector(".glyph-count") as HTMLElement;
+  outlineBtn = status.querySelector('[data-act="outline"]') as HTMLButtonElement;
+  focusBtn = status.querySelector('[data-act="focus"]') as HTMLButtonElement;
+  status.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest("button");
+    if (!btn) return;
+    if (btn.getAttribute("data-act") === "outline") toggleOutline();
+    else if (btn.getAttribute("data-act") === "focus") toggleFocus();
+  });
+
+  const outline = document.createElement("div");
+  outline.className = "glyph-outline";
+  outline.hidden = true;
+  outline.innerHTML = `<div class="glyph-outline-head">Outline</div><nav class="glyph-outline-list"></nav>`;
+  document.body.appendChild(outline);
+  outlineEl = outline;
+  outlineListEl = outline.querySelector(".glyph-outline-list") as HTMLElement;
+}
+
+function updateCount(): void {
+  if (!countEl) return;
+  const view = getView();
+  const text = view ? view.state.doc.textBetween(0, view.state.doc.content.size, " ", " ") : "";
+  const words = (text.trim().match(/\S+/g) || []).length;
+  const chars = text.length;
+  countEl.textContent = `${words} word${words === 1 ? "" : "s"} · ${chars} character${chars === 1 ? "" : "s"}`;
+}
+
+type Heading = { level: number; text: string; pos: number };
+
+function collectHeadings(): Heading[] {
+  const view = getView();
+  if (!view) return [];
+  const out: Heading[] = [];
+  view.state.doc.descendants((node: any, pos: number) => {
+    if (node.type.name === "heading") {
+      out.push({ level: node.attrs.level || 1, text: node.textContent || "Untitled", pos });
+    }
+    return true;
+  });
+  return out;
+}
+
+function refreshOutlineIfOpen(): void {
+  if (!outlineEl || outlineEl.hidden) return;
+  const headings = collectHeadings();
+  outlineListEl.innerHTML = "";
+  if (headings.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "glyph-outline-empty";
+    empty.textContent = "No headings yet";
+    outlineListEl.appendChild(empty);
+    return;
+  }
+  for (const h of headings) {
+    const a = document.createElement("a");
+    a.className = `lvl${h.level}`;
+    a.textContent = h.text;
+    a.addEventListener("click", () => goToHeading(h.pos));
+    outlineListEl.appendChild(a);
+  }
+}
+
+function goToHeading(pos: number): void {
+  const view = getView();
+  if (!view) return;
+  const tr = view.state.tr
+    .setSelection(TextSelection.near(view.state.doc.resolve(pos + 1)))
+    .scrollIntoView();
+  view.dispatch(tr);
+  view.focus();
+}
+
+function toggleOutline(): void {
+  ensureChrome();
+  outlineEl.hidden = !outlineEl.hidden;
+  outlineBtn?.classList.toggle("on", !outlineEl.hidden);
+  refreshOutlineIfOpen();
+}
+
+function toggleFocus(): void {
+  ensureChrome();
+  focusMode = !focusMode;
+  document.documentElement.classList.toggle("glyph-focus-on", focusMode);
+  focusBtn?.classList.toggle("on", focusMode);
+  // Force the focus plugin's decorations to recompute (empty transaction).
+  const view = getView();
+  if (view) view.dispatch(view.state.tr);
+}
+
 const FIND_CSS = `
 .glyph-find{position:fixed;top:12px;right:16px;z-index:9999;background:var(--glyph-find-bg,#fff);
   color:inherit;border:1px solid rgba(0,0,0,.15);border-radius:10px;
@@ -186,7 +380,7 @@ const FIND_CSS = `
 let findBarEl: HTMLDivElement | null = null;
 let findInput: HTMLInputElement;
 let replaceInput: HTMLInputElement;
-let countEl: HTMLElement;
+let findCountEl: HTMLElement;
 let replaceRow: HTMLElement;
 
 function ensureFindBar(): void {
@@ -216,7 +410,7 @@ function ensureFindBar(): void {
   findBarEl = bar;
   findInput = bar.querySelector(".glyph-find-input") as HTMLInputElement;
   replaceInput = bar.querySelector(".glyph-replace-input") as HTMLInputElement;
-  countEl = bar.querySelector(".glyph-find-count") as HTMLElement;
+  findCountEl = bar.querySelector(".glyph-find-count") as HTMLElement;
   replaceRow = bar.querySelector(".glyph-find-replace") as HTMLElement;
 
   findInput.addEventListener("input", applyQuery);
@@ -250,40 +444,40 @@ function applyQuery(): void {
   const view = getView();
   if (!view) return;
   view.dispatch(setSearchState(view.state.tr, currentQuery()));
-  updateCount(view);
+  updateFindCount(view);
 }
 
-function updateCount(view: any): void {
+function updateFindCount(view: any): void {
   const term = findInput.value;
-  if (!term) { countEl.textContent = ""; return; }
+  if (!term) { findCountEl.textContent = ""; return; }
   const text: string = view.state.doc.textBetween(0, view.state.doc.content.size, "\n", "\n");
   const hay = text.toLowerCase();
   const needle = term.toLowerCase();
   let n = 0, i = 0;
   while ((i = hay.indexOf(needle, i)) !== -1) { n++; i += needle.length; }
-  countEl.textContent = n === 1 ? "1 match" : `${n} matches`;
+  findCountEl.textContent = n === 1 ? "1 match" : `${n} matches`;
 }
 
 function findNextMatch(): void {
   if (!findBarEl || findBarEl.hidden) { showFind(false); return; }
   const view = getView();
-  if (view) { findNext(view.state, view.dispatch); updateCount(view); }
+  if (view) { findNext(view.state, view.dispatch); updateFindCount(view); }
 }
 
 function findPrevMatch(): void {
   if (!findBarEl || findBarEl.hidden) { showFind(false); return; }
   const view = getView();
-  if (view) { findPrev(view.state, view.dispatch); updateCount(view); }
+  if (view) { findPrev(view.state, view.dispatch); updateFindCount(view); }
 }
 
 function replaceOne(): void {
   const view = getView();
-  if (view) { replaceNext(view.state, view.dispatch); updateCount(getView()); }
+  if (view) { replaceNext(view.state, view.dispatch); updateFindCount(getView()); }
 }
 
 function replaceAllMatches(): void {
   const view = getView();
-  if (view) { replaceAll(view.state, view.dispatch); updateCount(getView()); }
+  if (view) { replaceAll(view.state, view.dispatch); updateFindCount(getView()); }
 }
 
 function showFind(withReplace: boolean): void {
@@ -316,6 +510,8 @@ function runCommand(name: string): void {
     case "findReplace": showFind(true); return;
     case "findNext": findNextMatch(); return;
     case "findPrev": findPrevMatch(); return;
+    case "toggleOutline": toggleOutline(); return;
+    case "toggleFocus": toggleFocus(); return;
   }
   const editor = crepe?.editor;
   if (!editor) return;
