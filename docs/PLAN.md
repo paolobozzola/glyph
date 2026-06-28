@@ -65,6 +65,9 @@ over a custom `app://` scheme handler.
 - [ ] Source ⇄ WYSIWYG toggle (raw-Markdown view for power users)
 - [ ] YAML frontmatter shown as an editable header block
 
+### v2.0
+- [ ] Sparkle auto-updates (appcast + EdDSA signing; host on GitHub Releases)
+
 ### Out of scope for a single-file app (revisit only if moving toward a vault)
 - Folder sidebar, wiki-links/backlinks, global search, tags, plugin system
 
