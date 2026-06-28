@@ -6,7 +6,10 @@
     <title>Glyph Editor</title>
     <style>
       html, body { margin: 0; height: 100%; }
-      #app { height: 100vh; box-sizing: border-box; }
+      body { display: flex; flex-direction: column; }
+      /* The properties panel (when present) is inserted before #app and takes its
+         natural height; the editor fills the rest and scrolls internally. */
+      #app { flex: 1 1 auto; min-height: 0; box-sizing: border-box; }
     </style>
   </head>
   <body>

@@ -128,6 +128,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         formatMenu.addItem(.separator())
         addCommand(to: formatMenu, "Horizontal Rule", "hr")
         addCommand(to: formatMenu, "Insert Table", "table")
+        formatMenu.addItem(.separator())
+        addCommand(to: formatMenu, "Add Properties", "addProperties")
 
         // View menu
         let viewItem = NSMenuItem()

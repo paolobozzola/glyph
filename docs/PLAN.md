@@ -63,7 +63,7 @@ over a custom `app://` scheme handler.
 - [x] Export to HTML and PDF (File ▸ Export; Milkdown `getHTML` + offscreen print-to-PDF)
 - [x] Word/char count (status bar), outline/TOC panel, focus / typewriter mode (View menu)
 - [x] Source ⇄ WYSIWYG toggle (raw-Markdown textarea; ⌥⌘M / status-bar button)
-- [ ] YAML frontmatter shown as an editable header block
+- [x] YAML frontmatter editable properties panel (simple key/value; complex YAML preserved raw)
 
 ### v2.0
 - [ ] Sparkle auto-updates (appcast + EdDSA signing; host on GitHub Releases)

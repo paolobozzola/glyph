@@ -130,7 +130,8 @@ async function mount(markdown: string): Promise<void> {
       updateCount();
       refreshOutlineIfOpen();
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => postToHost({ type: "change", markdown: md }), DEBOUNCE_MS);
+      // Prepend any frontmatter so the saved document keeps its properties.
+      debounceTimer = setTimeout(() => postToHost({ type: "change", markdown: fullMarkdown(md) }), DEBOUNCE_MS);
     });
   });
 }
@@ -246,6 +247,176 @@ function ensureImageHandlers(): void {
     const files = imageFilesFrom((e as DragEvent).dataTransfer);
     if (files.length) { e.preventDefault(); e.stopPropagation(); void handleImageFiles(files); }
   }, true);
+}
+
+// --- YAML frontmatter (editable properties panel) ------------------------
+// Simple top-level `key: value` frontmatter becomes an editable panel; anything
+// more complex (nested maps, block lists, comments) is preserved verbatim and
+// edited via Markdown source. The .md stays the source of truth.
+
+type FMRow = { key: string; value: string };
+let fmMode: "none" | "rows" | "raw" = "none";
+let fmRows: FMRow[] = [];
+let fmRaw = "";
+let propsEl: HTMLElement | null = null;
+let propsRowsEl: HTMLElement | null = null;
+
+function splitFrontmatter(text: string): { inner: string | null; body: string } {
+  const m = /^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/.exec(text);
+  if (!m || m.index !== 0) return { inner: null, body: text };
+  return { inner: m[1], body: text.slice(m[0].length) };
+}
+
+const FM_SIMPLE = /^([A-Za-z0-9_][\w .\-]*?):[ \t]?(.*)$/;
+
+function parseFrontmatter(inner: string): void {
+  const lines = inner.split(/\r?\n/);
+  const rows: FMRow[] = [];
+  for (const line of lines) {
+    // Empty, indented, or comment lines → too complex for the panel; keep raw.
+    if (line.trim() === "" || /^\s/.test(line) || line.trimStart().startsWith("#")) {
+      fmMode = "raw"; fmRaw = inner; fmRows = []; return;
+    }
+    const mm = FM_SIMPLE.exec(line);
+    if (!mm) { fmMode = "raw"; fmRaw = inner; fmRows = []; return; }
+    rows.push({ key: mm[1], value: mm[2] });
+  }
+  fmMode = "rows"; fmRows = rows; fmRaw = "";
+}
+
+function buildFrontmatterInner(): string | null {
+  if (fmMode === "raw") return fmRaw;
+  if (fmMode === "rows") {
+    const ls = fmRows
+      .filter((r) => r.key.trim())
+      .map((r) => (r.value ? `${r.key}: ${r.value}` : `${r.key}:`));
+    return ls.length ? ls.join("\n") : null;
+  }
+  return null;
+}
+
+function fullMarkdown(body: string): string {
+  const inner = buildFrontmatterInner();
+  const b = body.replace(/^\n+/, "");
+  return inner != null ? `---\n${inner}\n---\n\n${b}` : b;
+}
+
+/// Load a complete document: separate frontmatter, render the panel, mount the body.
+function applyFullMarkdown(text: string): void {
+  const { inner, body } = splitFrontmatter(text);
+  if (inner == null) { fmMode = "none"; fmRows = []; fmRaw = ""; }
+  else parseFrontmatter(inner);
+  renderProps();
+  void mount(body);
+}
+
+function postFullChange(): void {
+  if (sourceMode) return;
+  postToHost({ type: "change", markdown: fullMarkdown(crepe?.getMarkdown() ?? lastMarkdown) });
+}
+
+function ensureProps(): void {
+  if (propsEl) return;
+  const style = document.createElement("style");
+  style.textContent = `
+.glyph-props{flex:0 0 auto;max-height:38vh;overflow-y:auto;box-sizing:border-box;
+  padding:14px max(18px,calc(50% - 380px));background:rgba(245,241,232,.6);
+  border-bottom:1px solid rgba(0,0,0,.08);
+  font:13px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;}
+.glyph-props[hidden]{display:none;}
+.glyph-outline-on .glyph-props{padding-left:268px;}
+.glyph-props-head{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:8px;}
+.glyph-props-head span{font-weight:700;font-size:10.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:#9a6a00;}
+.glyph-props-head button{border:0;background:transparent;color:#6b6678;cursor:pointer;
+  font:inherit;font-weight:550;border-radius:6px;padding:3px 8px;}
+.glyph-props-head button:hover{background:rgba(0,0,0,.06);color:#1a1822;}
+.glyph-props-row{display:flex;gap:8px;align-items:center;margin:3px 0;}
+.glyph-props-row input{border:1px solid rgba(0,0,0,.14);border-radius:6px;padding:4px 8px;
+  font:inherit;background:#fff;color:#1a1822;}
+.glyph-props-key{flex:0 0 32%;font-weight:560;}
+.glyph-props-val{flex:1 1 auto;font-family:ui-monospace,"SF Mono",Menlo,monospace;}
+.glyph-props-del{flex:0 0 auto;border:0;background:transparent;color:#9a93a8;cursor:pointer;
+  font-size:15px;line-height:1;padding:2px 6px;border-radius:6px;}
+.glyph-props-del:hover{background:rgba(0,0,0,.08);color:#1a1822;}
+.glyph-props-raw{width:100%;box-sizing:border-box;border:1px dashed rgba(0,0,0,.2);border-radius:8px;
+  padding:8px 10px;background:transparent;color:#6b6678;resize:vertical;min-height:60px;
+  font:12px/1.5 ui-monospace,"SF Mono",Menlo,monospace;}
+.glyph-props-hint{margin:6px 0 0;color:#9a93a8;font-size:12px;}
+[data-theme=dark] .glyph-props{background:rgba(35,32,48,.5);border-bottom-color:rgba(255,255,255,.08);}
+[data-theme=dark] .glyph-props-head span{color:#e6b450;}
+[data-theme=dark] .glyph-props-row input{background:#232030;color:#e8e6ef;border-color:rgba(255,255,255,.16);}
+[data-theme=dark] .glyph-props-head button:hover,[data-theme=dark] .glyph-props-del:hover{background:rgba(255,255,255,.1);color:#e8e6ef;}
+`;
+  document.head.appendChild(style);
+
+  const panel = document.createElement("div");
+  panel.className = "glyph-props";
+  panel.hidden = true;
+  panel.innerHTML = `
+    <div class="glyph-props-head"><span>Properties</span>
+      <button data-act="add">+ Add field</button></div>
+    <div class="glyph-props-rows"></div>`;
+  document.body.insertBefore(panel, root);
+  propsEl = panel;
+  propsRowsEl = panel.querySelector(".glyph-props-rows") as HTMLElement;
+  panel.querySelector('[data-act="add"]')!.addEventListener("click", () => {
+    if (fmMode !== "rows") { fmMode = "rows"; fmRows = []; }
+    fmRows.push({ key: "", value: "" });
+    renderProps();
+    (propsRowsEl!.querySelector(".glyph-props-row:last-child .glyph-props-key") as HTMLInputElement)?.focus();
+  });
+}
+
+function renderProps(): void {
+  ensureProps();
+  if (sourceMode || fmMode === "none") { propsEl!.hidden = true; return; }
+  propsEl!.hidden = false;
+  propsRowsEl!.innerHTML = "";
+
+  if (fmMode === "raw") {
+    const ta = document.createElement("textarea");
+    ta.className = "glyph-props-raw";
+    ta.value = fmRaw;
+    ta.readOnly = true;
+    propsRowsEl!.appendChild(ta);
+    const hint = document.createElement("p");
+    hint.className = "glyph-props-hint";
+    hint.textContent = "This document's properties use nested YAML — edit them in Markdown source (⌥⌘M).";
+    propsRowsEl!.appendChild(hint);
+    return;
+  }
+
+  fmRows.forEach((row, i) => {
+    const el = document.createElement("div");
+    el.className = "glyph-props-row";
+    const key = document.createElement("input");
+    key.className = "glyph-props-key";
+    key.placeholder = "name";
+    key.value = row.key;
+    const val = document.createElement("input");
+    val.className = "glyph-props-val";
+    val.placeholder = "value";
+    val.value = row.value;
+    const del = document.createElement("button");
+    del.className = "glyph-props-del";
+    del.textContent = "×";
+    del.title = "Remove field";
+    key.addEventListener("input", () => { fmRows[i].key = key.value; postFullChange(); });
+    val.addEventListener("input", () => { fmRows[i].value = val.value; postFullChange(); });
+    del.addEventListener("click", () => { fmRows.splice(i, 1); if (fmRows.length === 0) fmMode = "none"; renderProps(); postFullChange(); });
+    el.append(key, val, del);
+    propsRowsEl!.appendChild(el);
+  });
+}
+
+function addProperties(): void {
+  ensureProps();
+  if (fmMode === "none") { fmMode = "rows"; fmRows = [{ key: "", value: "" }]; }
+  renderProps();
+  postFullChange();
+  (propsRowsEl?.querySelector(".glyph-props-key") as HTMLInputElement)?.focus();
 }
 
 // --- outline · word count · focus mode -----------------------------------
@@ -405,6 +576,9 @@ const HELP_SECTIONS: HelpSection[] = [
   ]},
   { title: "Images", rows: [
     ["Paste / drag", "Saved beside the file, linked"],
+  ]},
+  { title: "Properties", rows: [
+    ["Format ▸ Add Properties", "YAML frontmatter panel"],
   ]},
   { title: "Document", rows: [
     ["⌘N / ⌘O", "New / Open"],
@@ -639,11 +813,11 @@ function enterSource(): void {
   ensureSource();
   if (outlineEl && !outlineEl.hidden) toggleOutline();   // close distractions
   if (focusMode) toggleFocus();
-  const md = crepe ? crepe.getMarkdown() : lastMarkdown;
+  const md = fullMarkdown(crepe ? crepe.getMarkdown() : lastMarkdown);  // include frontmatter
   sourceEl!.value = md;
-  lastMarkdown = md;
   sourceMode = true;
   root.style.display = "none";
+  if (propsEl) propsEl.hidden = true;             // panel hidden while editing raw
   sourceEl!.hidden = false;
   sourceBtn?.classList.add("on");
   sourceEl!.focus();
@@ -658,7 +832,7 @@ function exitSource(): void {
   root.style.display = "";
   sourceBtn?.classList.remove("on");
   postToHost({ type: "change", markdown: md });   // flush any pending edit
-  void mount(md);                                 // re-render WYSIWYG from source
+  applyFullMarkdown(md);                           // re-split frontmatter + render
 }
 
 const FIND_CSS = `
@@ -820,6 +994,7 @@ function runCommand(name: string): void {
     case "toggleOutline": toggleOutline(); return;
     case "toggleFocus": toggleFocus(); return;
     case "toggleSource": toggleSource(); return;
+    case "addProperties": addProperties(); return;
     case "help": toggleHelp(); return;
   }
   if (sourceMode) return;   // formatting commands don't apply to raw source
@@ -844,10 +1019,11 @@ window.glyph = {
       lastMarkdown = text;
       updateCount();
     } else {
-      void mount(text);
+      applyFullMarkdown(text);
     }
   },
-  getMarkdown: () => (sourceMode && sourceEl ? sourceEl.value : crepe?.getMarkdown() ?? ""),
+  getMarkdown: () =>
+    sourceMode && sourceEl ? sourceEl.value : fullMarkdown(crepe?.getMarkdown() ?? ""),
   setTheme: (mode) => applyTheme(mode),
   cmd: (name) => runCommand(name),
   exportHTML: () => {

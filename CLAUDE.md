@@ -9,8 +9,10 @@ live rich-text rendering while the file on disk stays plain, portable Markdown.
 - **Status:** M0–M4 working. Editor, documents, formatting, find/replace, spelling, print,
   share, and **Quick Look preview + thumbnail now activate** (notarized Developer ID build;
   QL extensions must be sandboxed and must NOT carry `network.client` — see `docs/SETUP.md`).
-  Release via `make dist` (`docs/RELEASE.md`). v1.x in progress: **HTML/PDF export done**.
-  Sparkle auto-updates deferred to **v2.0**. Local dev: `make run` (recompile + launch).
+  Release via `make dist` (`docs/RELEASE.md`). **v1.x complete**: HTML/PDF export, image
+  paste/drag, outline + word count + focus mode, in-app cheat sheet, source⇄WYSIWYG toggle,
+  YAML frontmatter properties panel. Sparkle auto-updates deferred to **v2.0**.
+  Local dev: `make run` (recompile + launch); `make web` rebuilds the editor bundle.
 
 ## Product principle
 
