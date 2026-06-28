@@ -34,6 +34,10 @@ class PreviewViewController: NSViewController, QLPreviewingController {
             return
         }
         completion = handler
+        // Watchdog: never leave Quick Look spinning if the web view stalls.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6) { [weak self] in
+            self?.finish(nil)
+        }
         webView.load(URLRequest(url: URL(string: "app://preview/index.html")!))
     }
 }
