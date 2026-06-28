@@ -204,13 +204,13 @@ final class EditorViewController: NSViewController, WKScriptMessageHandler, WKNa
                 case .success(let data):
                     try? data.write(to: url)
                 case .failure(let error):
-                    self?.presentError(error)
+                    self?.showExportError(error)
                 }
             }
         }
     }
 
-    private func presentError(_ error: Error) {
+    private func showExportError(_ error: Error) {
         guard let window = view.window else { return }
         let alert = NSAlert(error: error)
         alert.beginSheetModal(for: window)
