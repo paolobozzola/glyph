@@ -149,6 +149,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         windowMenu.addItem(withTitle: "Bring All to Front", action: #selector(NSApplication.arrangeInFront(_:)), keyEquivalent: "")
         NSApp.windowsMenu = windowMenu
 
+        // Help menu
+        let helpItem = NSMenuItem()
+        mainMenu.addItem(helpItem)
+        let helpMenu = NSMenu(title: "Help")
+        helpItem.submenu = helpMenu
+        addCommand(to: helpMenu, "Glyph Cheat Sheet", "help", key: "/")
+        NSApp.helpMenu = helpMenu
+
         return mainMenu
     }
 

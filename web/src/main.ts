@@ -258,6 +258,125 @@ let outlineListEl: HTMLElement;
 let outlineBtn: HTMLButtonElement;
 let focusBtn: HTMLButtonElement;
 
+// --- help / cheat sheet --------------------------------------------------
+
+const HELP_CSS = `
+.glyph-help-scrim{position:fixed;inset:0;z-index:9500;display:flex;align-items:center;
+  justify-content:center;background:rgba(26,24,34,.38);
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);}
+.glyph-help-scrim[hidden]{display:none;}
+.glyph-help{width:min(720px,92vw);max-height:84vh;overflow-y:auto;background:#f5f1e8;
+  color:#1a1822;border-radius:16px;box-shadow:0 30px 80px -20px rgba(0,0,0,.55);
+  padding:26px 30px 30px;font:14px/1.5 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;}
+.glyph-help h2{margin:0 0 2px;font-size:20px;font-weight:680;letter-spacing:-.01em;}
+.glyph-help .sub{margin:0 0 20px;color:#6b6678;font-size:13px;}
+.glyph-help-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px 32px;}
+@media(max-width:560px){.glyph-help-cols{grid-template-columns:1fr;}}
+.glyph-help section{break-inside:avoid;margin-bottom:14px;}
+.glyph-help h3{margin:0 0 7px;font-size:11px;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;color:#9a6a00;}
+.glyph-help-row{display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+  padding:3px 0;}
+.glyph-help-row span{color:#3a3646;}
+.glyph-help kbd{display:inline-block;font:12px ui-monospace,"SF Mono",Menlo,monospace;
+  background:#fff;border:1px solid rgba(0,0,0,.18);border-bottom-width:2px;border-radius:6px;
+  padding:1px 6px;color:#1a1822;white-space:nowrap;}
+.glyph-help-foot{margin-top:14px;text-align:center;color:#9a93a8;font-size:12px;}
+[data-theme=dark] .glyph-help{background:#232030;color:#e8e6ef;}
+[data-theme=dark] .glyph-help .sub{color:#9a93a8;}
+[data-theme=dark] .glyph-help h3{color:#e6b450;}
+[data-theme=dark] .glyph-help-row span{color:#c8c4d4;}
+[data-theme=dark] .glyph-help kbd{background:#1a1822;border-color:rgba(255,255,255,.2);color:#e8e6ef;}
+`;
+
+type HelpSection = { title: string; rows: [string, string][] };
+
+const HELP_SECTIONS: HelpSection[] = [
+  { title: "Type to format", rows: [
+    ["# ␣ … ###### ␣", "Heading 1–6"],
+    ["- ␣", "Bulleted list"],
+    ["1. ␣", "Numbered list"],
+    ["> ␣", "Block quote"],
+    ["``` ␣", "Code block"],
+    ["--- ", "Horizontal rule"],
+    ["**text**", "Bold"],
+    ["*text*", "Italic"],
+  ]},
+  { title: "Format", rows: [
+    ["⌘B", "Bold"],
+    ["⌘I", "Italic"],
+    ["⌘K", "Link"],
+    ["⌥⌘1 … ⌥⌘6", "Heading 1–6"],
+    ["⌥⌘0", "Body text"],
+    ["⇧⌘8 / ⇧⌘7", "Bulleted / Numbered list"],
+  ]},
+  { title: "Edit & find", rows: [
+    ["⌘Z / ⇧⌘Z", "Undo / Redo"],
+    ["⌘F", "Find"],
+    ["⌥⌘F", "Find & Replace"],
+    ["⌘G / ⇧⌘G", "Find Next / Previous"],
+  ]},
+  { title: "View", rows: [
+    ["⌥⌘O", "Show / hide Outline"],
+    ["View ▸ Focus Mode", "Dim all but the current line"],
+    ["⌃⌘F", "Full Screen"],
+  ]},
+  { title: "Document", rows: [
+    ["⌘N / ⌘O", "New / Open"],
+    ["⌘S / ⇧⌘S", "Save / Save As"],
+    ["⌘P", "Print"],
+    ["File ▸ Export", "Export as HTML / PDF"],
+  ]},
+  { title: "Help", rows: [
+    ["⌘/", "Show this cheat sheet"],
+    ["Esc", "Close it"],
+  ]},
+];
+
+let helpScrim: HTMLElement | null = null;
+
+function ensureHelp(): void {
+  if (helpScrim) return;
+  const style = document.createElement("style");
+  style.textContent = HELP_CSS;
+  document.head.appendChild(style);
+
+  const cols = HELP_SECTIONS.map((s) => {
+    const rows = s.rows
+      .map(([k, d]) => `<div class="glyph-help-row"><span>${d}</span><kbd>${k}</kbd></div>`)
+      .join("");
+    return `<section><h3>${s.title}</h3>${rows}</section>`;
+  }).join("");
+
+  const scrim = document.createElement("div");
+  scrim.className = "glyph-help-scrim";
+  scrim.hidden = true;
+  scrim.innerHTML = `
+    <div class="glyph-help" role="dialog" aria-label="Glyph keyboard shortcuts">
+      <h2>Glyph cheat sheet</h2>
+      <p class="sub">Markdown shortcuts and keyboard commands.</p>
+      <div class="glyph-help-cols">${cols}</div>
+      <p class="glyph-help-foot">Press Esc or click outside to close · ⌘/ to reopen</p>
+    </div>`;
+  document.body.appendChild(scrim);
+  helpScrim = scrim;
+
+  scrim.addEventListener("click", (e) => {
+    if (e.target === scrim) toggleHelp();   // click on backdrop closes
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && helpScrim && !helpScrim.hidden) {
+      e.preventDefault();
+      toggleHelp();
+    }
+  });
+}
+
+function toggleHelp(): void {
+  ensureHelp();
+  helpScrim!.hidden = !helpScrim!.hidden;
+}
+
 function ensureChrome(): void {
   if (chromeReady) return;
   chromeReady = true;
@@ -542,6 +661,7 @@ function runCommand(name: string): void {
     case "findPrev": findPrevMatch(); return;
     case "toggleOutline": toggleOutline(); return;
     case "toggleFocus": toggleFocus(); return;
+    case "help": toggleHelp(); return;
   }
   const editor = crepe?.editor;
   if (!editor) return;
