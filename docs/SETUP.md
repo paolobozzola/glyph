@@ -76,6 +76,24 @@ pluginkit -m | grep -i glyph     # should now list the preview + thumbnail exten
 Then in Finder: select a `.md` file and press **space** (preview), and view it in a folder
 (thumbnail). Reliable activation really wants Developer ID signing — that's **M4**.
 
+### Quick Look gotchas (learned the hard way)
+
+- **The QL extensions MUST be sandboxed** (`com.apple.security.app-sandbox`) or pkd registers
+  them (they show in System Settings) but never activates them → Finder uses its built-in
+  text preview. See `QuickLook/Glyph-QuickLook.entitlements`.
+- **Do NOT add `com.apple.security.network.client`** to the QL extensions — a sandboxed QL
+  extension carrying it is *rejected by pkd entirely* (`pluginkit -m` shows nothing). The
+  `WKWebView` preview works fine without it (it loads local content over `app://`).
+- After install, extensions may register as disabled (`!` in `pluginkit -m`). Enable with:
+  ```sh
+  pluginkit -e use -i com.paolobozzola.glyph.QuickLookPreview
+  pluginkit -e use -i com.paolobozzola.glyph.QuickLookThumbnail
+  qlmanage -r cache
+  ```
+  or toggle them on in **System Settings ▸ General ▸ Login Items & Extensions ▸ Quick Look**.
+- To confirm third-party QL works at all on a machine, build Xcode's stock
+  *Quick Look Preview Extension* template — if it registers, the issue is your config.
+
 Notes:
 - `qlmanage -p` cannot host app-extension previews (crashes in ExtensionFoundation); use Finder.
 - Ad-hoc builds in DerivedData are **not** discovered by `pluginkit` — install to /Applications.

@@ -8,10 +8,5 @@
     <!-- Read the file being previewed (the QL host grants access to it). -->
     <key>com.apple.security.files.user-selected.read-only</key>
     <true/>
-    <!-- WKWebView's WebKit networking process needs this to initialize, even when
-         only loading local content over the app:// scheme. Without it the load
-         never finishes and Quick Look spins forever. -->
-    <key>com.apple.security.network.client</key>
-    <true/>
 </dict>
 </plist>

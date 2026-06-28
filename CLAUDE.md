@@ -6,10 +6,10 @@ live rich-text rendering while the file on disk stays plain, portable Markdown.
 - **Name:** Glyph
 - **Owner:** paolobozzola (paolo.bozzola@moviri.com)
 - **Repo:** github.com/paolobozzola/glyph (private initially)
-- **Status:** M0–M3 done (editor, documents, formatting, find/replace, spelling, print, share,
-  Quick Look preview+thumbnail). **M4 pipeline ready** (`make dist` → sign/notarize/DMG, see
-  `docs/RELEASE.md`) but **blocked on paid Apple Developer Program** — needed to notarize and
-  to activate the Quick Look extensions. Build/run via `docs/SETUP.md`; roadmap in `docs/PLAN.md`.
+- **Status:** M0–M4 working. Editor, documents, formatting, find/replace, spelling, print,
+  share, and **Quick Look preview + thumbnail now activate** (notarized Developer ID build;
+  QL extensions must be sandboxed and must NOT carry `network.client` — see `docs/SETUP.md`).
+  Release via `make dist` (`docs/RELEASE.md`). Sparkle auto-updates still deferred.
 
 ## Product principle
 
