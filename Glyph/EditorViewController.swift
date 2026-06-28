@@ -182,7 +182,7 @@ final class EditorViewController: NSViewController, WKScriptMessageHandler, WKNa
     }
 
     private func renderPDF(html: String, to url: URL) {
-        // US Letter at 72 dpi; the print operation paginates the content.
+        // Render at US-Letter content width; createPDF captures the full content.
         let web = WKWebView(frame: NSRect(x: 0, y: 0, width: 612, height: 792))
         web.navigationDelegate = self
         pdfWebView = web
@@ -194,22 +194,26 @@ final class EditorViewController: NSViewController, WKScriptMessageHandler, WKNa
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         guard webView === pdfWebView, let url = pdfURL else { return }
-        defer { pdfWebView = nil; pdfURL = nil }
+        // Let layout settle, then capture a compact vector PDF via the modern API.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+            guard let self else { return }
+            let config = WKPDFConfiguration()   // full content (rect defaults to whole view)
+            webView.createPDF(configuration: config) { [weak self] result in
+                defer { self?.pdfWebView = nil; self?.pdfURL = nil }
+                switch result {
+                case .success(let data):
+                    try? data.write(to: url)
+                case .failure(let error):
+                    self?.presentError(error)
+                }
+            }
+        }
+    }
 
-        let info = NSPrintInfo(dictionary: [
-            .jobDisposition: NSPrintInfo.JobDisposition.save,
-            .jobSavingURL: url,
-        ])
-        info.paperSize = NSSize(width: 612, height: 792)
-        info.topMargin = 36; info.bottomMargin = 36
-        info.leftMargin = 36; info.rightMargin = 36
-        info.horizontalPagination = .fit
-        info.verticalPagination = .automatic
-
-        let operation = webView.printOperation(with: info)
-        operation.showsPrintPanel = false
-        operation.showsProgressPanel = false
-        operation.run()
+    private func presentError(_ error: Error) {
+        guard let window = view.window else { return }
+        let alert = NSAlert(error: error)
+        alert.beginSheetModal(for: window)
     }
 
     // MARK: - NSWindowDelegate
