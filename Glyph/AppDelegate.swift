@@ -40,13 +40,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         fileItem.submenu = fileMenu
         fileMenu.addItem(withTitle: "New", action: #selector(NSDocumentController.newDocument(_:)), keyEquivalent: "n")
         fileMenu.addItem(withTitle: "Open…", action: #selector(NSDocumentController.openDocument(_:)), keyEquivalent: "o")
-
-        // Open Recent (auto-populated by NSDocumentController)
-        let openRecentItem = fileMenu.addItem(withTitle: "Open Recent", action: nil, keyEquivalent: "")
-        let openRecentMenu = NSMenu(title: "Open Recent")
-        openRecentItem.submenu = openRecentMenu
-        let clearItem = openRecentMenu.addItem(withTitle: "Clear Menu", action: #selector(NSDocumentController.clearRecentDocuments(_:)), keyEquivalent: "")
-        clearItem.tag = 0
+        // Note: "Open Recent" is provided automatically by AppKit on this macOS;
+        // we intentionally don't build one here to avoid a duplicate entry.
 
         fileMenu.addItem(.separator())
         fileMenu.addItem(withTitle: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
