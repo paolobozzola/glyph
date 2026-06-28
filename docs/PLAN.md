@@ -62,7 +62,7 @@ over a custom `app://` scheme handler.
 - [x] Image handling: paste/drag → save to `<doc>.assets/`, insert relative link (app:// serves doc-dir assets)
 - [x] Export to HTML and PDF (File ▸ Export; Milkdown `getHTML` + offscreen print-to-PDF)
 - [x] Word/char count (status bar), outline/TOC panel, focus / typewriter mode (View menu)
-- [ ] Source ⇄ WYSIWYG toggle (raw-Markdown view for power users)
+- [x] Source ⇄ WYSIWYG toggle (raw-Markdown textarea; ⌥⌘M / status-bar button)
 - [ ] YAML frontmatter shown as an editable header block
 
 ### v2.0

@@ -337,6 +337,7 @@ let outlineEl: HTMLElement;
 let outlineListEl: HTMLElement;
 let outlineBtn: HTMLButtonElement;
 let focusBtn: HTMLButtonElement;
+let sourceBtn: HTMLButtonElement | undefined;
 
 // --- help / cheat sheet --------------------------------------------------
 
@@ -398,8 +399,12 @@ const HELP_SECTIONS: HelpSection[] = [
   ]},
   { title: "View", rows: [
     ["⌥⌘O", "Show / hide Outline"],
+    ["⌥⌘M", "Markdown source ⇄ rich text"],
     ["View ▸ Focus Mode", "Dim all but the current line"],
     ["⌃⌘F", "Full Screen"],
+  ]},
+  { title: "Images", rows: [
+    ["Paste / drag", "Saved beside the file, linked"],
   ]},
   { title: "Document", rows: [
     ["⌘N / ⌘O", "New / Open"],
@@ -470,6 +475,7 @@ function ensureChrome(): void {
   status.innerHTML = `
     <span class="glyph-count"></span>
     <span class="glyph-status-actions">
+      <button data-act="source">Markdown</button>
       <button data-act="outline">Outline</button>
       <button data-act="focus">Focus</button>
     </span>`;
@@ -477,11 +483,14 @@ function ensureChrome(): void {
   countEl = status.querySelector(".glyph-count") as HTMLElement;
   outlineBtn = status.querySelector('[data-act="outline"]') as HTMLButtonElement;
   focusBtn = status.querySelector('[data-act="focus"]') as HTMLButtonElement;
+  sourceBtn = status.querySelector('[data-act="source"]') as HTMLButtonElement;
   status.addEventListener("click", (e) => {
     const btn = (e.target as HTMLElement).closest("button");
     if (!btn) return;
-    if (btn.getAttribute("data-act") === "outline") toggleOutline();
-    else if (btn.getAttribute("data-act") === "focus") toggleFocus();
+    const act = btn.getAttribute("data-act");
+    if (act === "outline") toggleOutline();
+    else if (act === "focus") toggleFocus();
+    else if (act === "source") toggleSource();
   });
 
   const outline = document.createElement("div");
@@ -495,8 +504,13 @@ function ensureChrome(): void {
 
 function updateCount(): void {
   if (!countEl) return;
-  const view = getView();
-  const text = view ? view.state.doc.textBetween(0, view.state.doc.content.size, " ", " ") : "";
+  let text: string;
+  if (sourceMode && sourceEl) {
+    text = sourceEl.value;
+  } else {
+    const view = getView();
+    text = view ? view.state.doc.textBetween(0, view.state.doc.content.size, " ", " ") : "";
+  }
   const words = (text.trim().match(/\S+/g) || []).length;
   const chars = text.length;
   const parts = [
@@ -581,6 +595,70 @@ function toggleFocus(): void {
   // Force the focus plugin's decorations to recompute (empty transaction).
   const view = getView();
   if (view) view.dispatch(view.state.tr);
+}
+
+// --- source (raw Markdown) mode ------------------------------------------
+
+let sourceMode = false;
+let sourceEl: HTMLTextAreaElement | null = null;
+let sourceDebounce: ReturnType<typeof setTimeout> | undefined;
+
+function ensureSource(): void {
+  if (sourceEl) return;
+  const style = document.createElement("style");
+  style.textContent = `
+.glyph-source{position:fixed;left:0;right:0;top:0;bottom:34px;z-index:8500;margin:0;border:0;
+  outline:0;resize:none;box-sizing:border-box;padding:36px max(24px,calc(50% - 380px));
+  background:#f5f1e8;color:#1a1822;font:14px/1.7 ui-monospace,"SF Mono",Menlo,monospace;tab-size:2;}
+.glyph-source[hidden]{display:none;}
+[data-theme=dark] .glyph-source{background:#1a1822;color:#e8e6ef;}
+`;
+  document.head.appendChild(style);
+
+  const ta = document.createElement("textarea");
+  ta.className = "glyph-source";
+  ta.spellcheck = false;
+  ta.hidden = true;
+  document.body.appendChild(ta);
+  sourceEl = ta;
+  ta.addEventListener("input", () => {
+    lastMarkdown = ta.value;
+    updateCount();
+    clearTimeout(sourceDebounce);
+    sourceDebounce = setTimeout(() => postToHost({ type: "change", markdown: ta.value }), DEBOUNCE_MS);
+  });
+}
+
+function toggleSource(): void {
+  if (sourceMode) exitSource();
+  else enterSource();
+}
+
+function enterSource(): void {
+  ensureChrome();
+  ensureSource();
+  if (outlineEl && !outlineEl.hidden) toggleOutline();   // close distractions
+  if (focusMode) toggleFocus();
+  const md = crepe ? crepe.getMarkdown() : lastMarkdown;
+  sourceEl!.value = md;
+  lastMarkdown = md;
+  sourceMode = true;
+  root.style.display = "none";
+  sourceEl!.hidden = false;
+  sourceBtn?.classList.add("on");
+  sourceEl!.focus();
+  updateCount();
+}
+
+function exitSource(): void {
+  if (!sourceEl) return;
+  const md = sourceEl.value;
+  sourceMode = false;
+  sourceEl.hidden = true;
+  root.style.display = "";
+  sourceBtn?.classList.remove("on");
+  postToHost({ type: "change", markdown: md });   // flush any pending edit
+  void mount(md);                                 // re-render WYSIWYG from source
 }
 
 const FIND_CSS = `
@@ -741,8 +819,10 @@ function runCommand(name: string): void {
     case "findPrev": findPrevMatch(); return;
     case "toggleOutline": toggleOutline(); return;
     case "toggleFocus": toggleFocus(); return;
+    case "toggleSource": toggleSource(); return;
     case "help": toggleHelp(); return;
   }
+  if (sourceMode) return;   // formatting commands don't apply to raw source
   const editor = crepe?.editor;
   if (!editor) return;
   const [cmd, arg] = name.split(":");
@@ -759,9 +839,15 @@ function runCommand(name: string): void {
 
 window.glyph = {
   setMarkdown: (text: string) => {
-    void mount(text);
+    if (sourceMode && sourceEl) {
+      sourceEl.value = text;
+      lastMarkdown = text;
+      updateCount();
+    } else {
+      void mount(text);
+    }
   },
-  getMarkdown: () => crepe?.getMarkdown() ?? "",
+  getMarkdown: () => (sourceMode && sourceEl ? sourceEl.value : crepe?.getMarkdown() ?? ""),
   setTheme: (mode) => applyTheme(mode),
   cmd: (name) => runCommand(name),
   exportHTML: () => {

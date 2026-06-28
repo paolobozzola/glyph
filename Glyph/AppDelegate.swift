@@ -135,6 +135,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let viewMenu = NSMenu(title: "View")
         viewItem.submenu = viewMenu
         addCommand(to: viewMenu, "Show Outline", "toggleOutline", key: "o", modifiers: [.command, .option])
+        addCommand(to: viewMenu, "Markdown Source", "toggleSource", key: "m", modifiers: [.command, .option])
         addCommand(to: viewMenu, "Focus Mode", "toggleFocus")   // no accelerator (⌃⌘F is Full Screen)
         viewMenu.addItem(.separator())
         viewMenu.addItem(withTitle: "Enter Full Screen", action: #selector(NSWindow.toggleFullScreen(_:)), keyEquivalent: "f")
