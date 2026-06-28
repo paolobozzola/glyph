@@ -328,7 +328,7 @@ const HELP_SECTIONS: HelpSection[] = [
     ["File ▸ Export", "Export as HTML / PDF"],
   ]},
   { title: "Help", rows: [
-    ["⌘/", "Show this cheat sheet"],
+    ["Help menu", "Show this cheat sheet"],
     ["Esc", "Close it"],
   ]},
 ];
@@ -356,7 +356,7 @@ function ensureHelp(): void {
       <h2>Glyph cheat sheet</h2>
       <p class="sub">Markdown shortcuts and keyboard commands.</p>
       <div class="glyph-help-cols">${cols}</div>
-      <p class="glyph-help-foot">Press Esc or click outside to close · ⌘/ to reopen</p>
+      <p class="glyph-help-foot">Press Esc or click outside to close · reopen from the Help menu</p>
     </div>`;
   document.body.appendChild(scrim);
   helpScrim = scrim;

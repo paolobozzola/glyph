@@ -154,7 +154,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         mainMenu.addItem(helpItem)
         let helpMenu = NSMenu(title: "Help")
         helpItem.submenu = helpMenu
-        addCommand(to: helpMenu, "Glyph Cheat Sheet", "help", key: "/")
+        // No key equivalent: punctuation accelerators (⌘/) mis-map on non-US
+        // layouts (e.g. Italian). Reachable via this menu instead.
+        addCommand(to: helpMenu, "Glyph Cheat Sheet", "help")
         NSApp.helpMenu = helpMenu
 
         return mainMenu
