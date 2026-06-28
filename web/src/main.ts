@@ -202,41 +202,50 @@ function focusPlugin(): Plugin {
 }
 
 const CHROME_CSS = `
-.glyph-status{position:fixed;left:0;right:0;bottom:0;z-index:9000;height:30px;
+.glyph-status{position:fixed;left:0;right:0;bottom:0;z-index:9000;height:34px;
   display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:0 14px;font:12px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  color:#6b6678;background:rgba(245,241,232,.92);border-top:1px solid rgba(0,0,0,.08);
-  -webkit-backdrop-filter:saturate(180%) blur(8px);backdrop-filter:saturate(180%) blur(8px);}
-.glyph-status-actions{display:flex;gap:6px;}
-.glyph-status button{border:1px solid rgba(0,0,0,.15);background:transparent;color:inherit;
-  border-radius:6px;padding:2px 9px;cursor:pointer;font:inherit;line-height:1.3;}
-.glyph-status button:hover{background:rgba(0,0,0,.06);}
-.glyph-status button.on{background:#e6b450;border-color:#e6b450;color:#1a1822;}
-.ProseMirror{padding-bottom:42px;}
-.glyph-outline{position:fixed;top:0;left:0;bottom:30px;z-index:9100;width:248px;
-  background:rgba(245,241,232,.97);border-right:1px solid rgba(0,0,0,.1);overflow-y:auto;
-  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
-  font:13px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;}
+  padding:0 16px;font:12px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  color:#6b6678;background:rgba(245,241,232,.85);border-top:1px solid rgba(0,0,0,.07);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);}
+.glyph-count{font-variant-numeric:tabular-nums;letter-spacing:.01em;}
+.glyph-status-actions{display:flex;gap:8px;}
+.glyph-status button{border:0;background:transparent;color:#6b6678;
+  border-radius:7px;padding:5px 11px;cursor:pointer;font:inherit;font-weight:550;
+  transition:background .12s ease,color .12s ease;}
+.glyph-status button:hover{background:rgba(0,0,0,.06);color:#1a1822;}
+.glyph-status button.on{background:rgba(230,180,80,.22);color:#9a6a00;}
+.ProseMirror{padding-bottom:48px;}
+.glyph-outline{position:fixed;top:0;left:0;bottom:34px;z-index:9100;width:260px;
+  background:rgba(245,241,232,.85);border-right:1px solid rgba(0,0,0,.08);overflow-y:auto;
+  -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
+  padding:8px;font:13px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;}
 .glyph-outline[hidden]{display:none;}
-.glyph-outline-head{padding:12px 14px 6px;font-weight:650;color:#1a1822;
-  letter-spacing:.04em;text-transform:uppercase;font-size:11px;}
-.glyph-outline a{display:block;padding:4px 14px;color:#1a1822;text-decoration:none;
-  cursor:pointer;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.glyph-outline a:hover{background:rgba(0,0,0,.06);}
+.glyph-outline-head{padding:10px 10px 8px;font-weight:650;color:#9a93a8;
+  letter-spacing:.08em;text-transform:uppercase;font-size:10.5px;}
+.glyph-outline a{display:block;padding:5px 10px;margin:1px 0;color:#1a1822;text-decoration:none;
+  cursor:pointer;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:background .12s ease;}
+.glyph-outline a:hover{background:rgba(230,180,80,.18);}
+.glyph-outline a:active{background:rgba(230,180,80,.32);}
 .glyph-outline a.lvl1{font-weight:600;}
-.glyph-outline a.lvl2{padding-left:26px;}
+.glyph-outline a.lvl2{padding-left:24px;}
 .glyph-outline a.lvl3{padding-left:38px;color:#6b6678;}
-.glyph-outline a.lvl4,.glyph-outline a.lvl5,.glyph-outline a.lvl6{padding-left:50px;color:#6b6678;}
-.glyph-outline-empty{padding:6px 14px;color:#9a93a8;}
-.glyph-focus-on .ProseMirror>*{opacity:.3;transition:opacity .25s ease;}
-.glyph-focus-on .ProseMirror>.glyph-active{opacity:1;}
-.glyph-focus-on .ProseMirror{padding-top:42vh;padding-bottom:42vh;}
-[data-theme=dark] .glyph-status{background:rgba(35,32,48,.92);color:#9a93a8;border-top-color:rgba(255,255,255,.1);}
-[data-theme=dark] .glyph-status button{border-color:rgba(255,255,255,.18);}
-[data-theme=dark] .glyph-status button:hover{background:rgba(255,255,255,.1);}
-[data-theme=dark] .glyph-outline{background:rgba(35,32,48,.97);border-right-color:rgba(255,255,255,.12);}
-[data-theme=dark] .glyph-outline-head,[data-theme=dark] .glyph-outline a{color:#e8e6ef;}
-[data-theme=dark] .glyph-outline a:hover{background:rgba(255,255,255,.08);}
+.glyph-outline a.lvl4,.glyph-outline a.lvl5,.glyph-outline a.lvl6{padding-left:52px;color:#6b6678;font-size:12.5px;}
+.glyph-outline-empty{padding:6px 10px;color:#9a93a8;}
+.glyph-focus-on .ProseMirror>*{opacity:.45;transition:opacity .25s ease;}
+.glyph-focus-on .ProseMirror>.glyph-active,
+.glyph-focus-on .ProseMirror .glyph-active,
+.glyph-focus-on .ProseMirror>*:has(.glyph-active){opacity:1 !important;}
+.glyph-focus-on .ProseMirror{padding-top:40vh;padding-bottom:40vh;}
+@keyframes glyph-flash{0%{background:rgba(230,180,80,.45);}100%{background:transparent;}}
+.glyph-flash{animation:glyph-flash 1s ease;border-radius:4px;}
+[data-theme=dark] .glyph-status{background:rgba(35,32,48,.82);color:#9a93a8;border-top-color:rgba(255,255,255,.08);}
+[data-theme=dark] .glyph-status button{color:#9a93a8;}
+[data-theme=dark] .glyph-status button:hover{background:rgba(255,255,255,.09);color:#e8e6ef;}
+[data-theme=dark] .glyph-status button.on{background:rgba(230,180,80,.2);color:#e6b450;}
+[data-theme=dark] .glyph-outline{background:rgba(35,32,48,.82);border-right-color:rgba(255,255,255,.1);}
+[data-theme=dark] .glyph-outline a{color:#e8e6ef;}
+[data-theme=dark] .glyph-outline a:hover{background:rgba(230,180,80,.16);}
 [data-theme=dark] .glyph-outline a.lvl3,[data-theme=dark] .glyph-outline a.lvl4{color:#9a93a8;}
 `;
 
@@ -330,10 +339,22 @@ function refreshOutlineIfOpen(): void {
 function goToHeading(pos: number): void {
   const view = getView();
   if (!view) return;
-  const tr = view.state.tr
-    .setSelection(TextSelection.near(view.state.doc.resolve(pos + 1)))
-    .scrollIntoView();
-  view.dispatch(tr);
+  view.dispatch(view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(pos + 1))));
+  // Scroll the heading's DOM node to center and flash it, so the jump is visible
+  // even when the document already fits on screen.
+  const domInfo = view.domAtPos(pos + 1);
+  let node: Element | null =
+    domInfo.node.nodeType === 1 ? (domInfo.node as Element) : domInfo.node.parentElement;
+  while (node && node.parentElement && !/^H[1-6]$/.test(node.tagName)) {
+    if (node.parentElement.classList?.contains("ProseMirror")) break;
+    node = node.parentElement;
+  }
+  node?.scrollIntoView({ block: "center", behavior: "smooth" });
+  if (node) {
+    node.classList.remove("glyph-flash");
+    void (node as HTMLElement).offsetWidth; // restart the animation
+    node.classList.add("glyph-flash");
+  }
   view.focus();
 }
 
