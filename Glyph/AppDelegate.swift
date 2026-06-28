@@ -93,8 +93,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let spellingItem = editMenu.addItem(withTitle: "Spelling and Grammar", action: nil, keyEquivalent: "")
         let spellingMenu = NSMenu(title: "Spelling and Grammar")
         spellingItem.submenu = spellingMenu
-        spellingMenu.addItem(withTitle: "Show Spelling and Grammar", action: #selector(NSText.showGuessPanel(_:)), keyEquivalent: ":")
-        spellingMenu.addItem(withTitle: "Check Document Now", action: #selector(NSText.checkSpelling(_:)), keyEquivalent: ";")
+        // No accelerators: Apple's defaults here are ⌘: and ⌘; — punctuation keys
+        // that mis-map on non-US layouts. Menu access only.
+        spellingMenu.addItem(withTitle: "Show Spelling and Grammar", action: #selector(NSText.showGuessPanel(_:)), keyEquivalent: "")
+        spellingMenu.addItem(withTitle: "Check Document Now", action: #selector(NSText.checkSpelling(_:)), keyEquivalent: "")
         spellingMenu.addItem(.separator())
         spellingMenu.addItem(withTitle: "Check Spelling While Typing", action: #selector(NSTextView.toggleContinuousSpellChecking(_:)), keyEquivalent: "")
         spellingMenu.addItem(withTitle: "Check Grammar With Spelling", action: #selector(NSTextView.toggleGrammarChecking(_:)), keyEquivalent: "")
@@ -154,15 +156,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         mainMenu.addItem(helpItem)
         let helpMenu = NSMenu(title: "Help")
         helpItem.submenu = helpMenu
-        // No key equivalent: punctuation accelerators (⌘/) mis-map on non-US
-        // layouts (e.g. Italian). Reachable via this menu instead.
-        addCommand(to: helpMenu, "Glyph Cheat Sheet", "help")
+        // ⇧⌘H: letter-based, so it's stable across international layouts (unlike
+        // punctuation keys such as ⌘/ which mis-map on e.g. Italian keyboards).
+        addCommand(to: helpMenu, "Glyph Cheat Sheet", "help", key: "h", modifiers: [.command, .shift])
         NSApp.helpMenu = helpMenu
 
         return mainMenu
     }
 
-    /// Add a Format-menu item that routes a bridge command to the focused editor.
+    /// Add a menu item that routes a bridge command to the focused editor.
+    /// Shortcut policy: use only **letters or digits** for `key` — punctuation key
+    /// equivalents (":", ";", "/", "?") mis-map on non-US keyboard layouts.
     @discardableResult
     private func addCommand(to menu: NSMenu,
                             _ title: String,
