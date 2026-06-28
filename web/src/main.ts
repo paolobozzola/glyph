@@ -1,5 +1,5 @@
 import { Crepe } from "@milkdown/crepe";
-import { callCommand, $prose } from "@milkdown/kit/utils";
+import { callCommand, $prose, getHTML } from "@milkdown/kit/utils";
 import { undoCommand, redoCommand } from "@milkdown/kit/plugin/history";
 import { remarkStringifyOptionsCtx, editorViewCtx } from "@milkdown/kit/core";
 import {
@@ -29,6 +29,7 @@ import { toggleStrikethroughCommand, insertTableCommand } from "@milkdown/kit/pr
 import "@milkdown/crepe/theme/common/style.css";
 import frameLight from "@milkdown/crepe/theme/frame.css?inline";
 import frameDark from "@milkdown/crepe/theme/frame-dark.css?inline";
+import exportCss from "./export.css?inline";
 
 // ---------------------------------------------------------------------------
 // Glyph editor bundle.
@@ -53,6 +54,7 @@ type Bridge = {
   getMarkdown: () => string;
   setTheme: (mode: ThemeMode) => void;
   cmd: (name: string) => void;
+  exportHTML: () => string;
 };
 
 declare global {
@@ -336,6 +338,13 @@ window.glyph = {
   getMarkdown: () => crepe?.getMarkdown() ?? "",
   setTheme: (mode) => applyTheme(mode),
   cmd: (name) => runCommand(name),
+  exportHTML: () => {
+    const body = crepe ? crepe.editor.action(getHTML()) : "";
+    return `<!doctype html><html><head><meta charset="utf-8">` +
+      `<meta name="viewport" content="width=device-width, initial-scale=1">` +
+      `<style>${exportCss}</style></head>` +
+      `<body class="markdown-body">${body}</body></html>`;
+  },
 };
 
 // Boot: mount a placeholder, tell the host we're ready; the host replies with the

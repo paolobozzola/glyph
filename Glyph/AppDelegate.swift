@@ -60,6 +60,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let pageSetup = fileMenu.addItem(withTitle: "Page Setup…", action: #selector(NSDocument.runPageLayout(_:)), keyEquivalent: "P")
         pageSetup.keyEquivalentModifierMask = [.command, .shift]
         fileMenu.addItem(withTitle: "Print…", action: #selector(EditorViewController.printDocument(_:)), keyEquivalent: "p")
+        fileMenu.addItem(.separator())
+        let exportItem = fileMenu.addItem(withTitle: "Export", action: nil, keyEquivalent: "")
+        let exportMenu = NSMenu(title: "Export")
+        exportItem.submenu = exportMenu
+        exportMenu.addItem(withTitle: "Export as HTML…", action: #selector(EditorViewController.exportAsHTML(_:)), keyEquivalent: "")
+        exportMenu.addItem(withTitle: "Export as PDF…", action: #selector(EditorViewController.exportAsPDF(_:)), keyEquivalent: "")
 
         // Edit menu
         let editItem = NSMenuItem()

@@ -60,7 +60,7 @@ over a custom `app://` scheme handler.
 
 ### v1.x — polish
 - [ ] Image handling: paste/drag → save to sibling assets folder, insert relative link
-- [ ] Export to HTML and PDF (print pipeline)
+- [x] Export to HTML and PDF (File ▸ Export; Milkdown `getHTML` + offscreen print-to-PDF)
 - [ ] Word/char count, outline/TOC popover, focus / typewriter mode
 - [ ] Source ⇄ WYSIWYG toggle (raw-Markdown view for power users)
 - [ ] YAML frontmatter shown as an editable header block

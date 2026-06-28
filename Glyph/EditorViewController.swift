@@ -1,5 +1,6 @@
 import AppKit
 import WebKit
+import UniformTypeIdentifiers
 
 /// Hosts the Milkdown editor (a WKWebView) and bridges it to the document.
 ///
@@ -7,12 +8,16 @@ import WebKit
 /// **once**, after the editor reports `ready`. During editing the flow is JS → Swift
 /// only (we never push model → web view on keystrokes). Re-load only on revert /
 /// external reload.
-final class EditorViewController: NSViewController, WKScriptMessageHandler, NSWindowDelegate {
+final class EditorViewController: NSViewController, WKScriptMessageHandler, WKNavigationDelegate, NSWindowDelegate {
 
     weak var document: MarkdownDocument?
 
     private var webView: WKWebView!
     private var isEditorReady = false
+
+    // Offscreen web view used only for PDF export (retained until printing finishes).
+    private var pdfWebView: WKWebView?
+    private var pdfURL: URL?
 
     // MARK: - View
 
@@ -133,6 +138,78 @@ final class EditorViewController: NSViewController, WKScriptMessageHandler, NSWi
         let items: [Any] = document?.fileURL.map { [$0] } ?? [document?.text ?? ""]
         let picker = NSSharingServicePicker(items: items)
         picker.show(relativeTo: .zero, of: contentView, preferredEdge: .minY)
+    }
+
+    // MARK: - Export
+
+    private var baseName: String {
+        document?.fileURL?.deletingPathExtension().lastPathComponent
+            ?? (document?.displayName ?? "Untitled")
+    }
+
+    /// File ▸ Export ▸ Export as HTML…
+    @objc func exportAsHTML(_ sender: Any?) {
+        fetchExportHTML { [weak self] html in
+            guard let self, let window = self.view.window else { return }
+            let panel = NSSavePanel()
+            panel.allowedContentTypes = [.html]
+            panel.nameFieldStringValue = self.baseName + ".html"
+            panel.beginSheetModal(for: window) { response in
+                guard response == .OK, let url = panel.url else { return }
+                try? Data(html.utf8).write(to: url)
+            }
+        }
+    }
+
+    /// File ▸ Export ▸ Export as PDF…
+    @objc func exportAsPDF(_ sender: Any?) {
+        fetchExportHTML { [weak self] html in
+            guard let self, let window = self.view.window else { return }
+            let panel = NSSavePanel()
+            panel.allowedContentTypes = [.pdf]
+            panel.nameFieldStringValue = self.baseName + ".pdf"
+            panel.beginSheetModal(for: window) { response in
+                guard response == .OK, let url = panel.url else { return }
+                self.renderPDF(html: html, to: url)
+            }
+        }
+    }
+
+    private func fetchExportHTML(_ completion: @escaping (String) -> Void) {
+        webView.evaluateJavaScript("window.glyph.exportHTML()") { value, _ in
+            if let html = value as? String { completion(html) }
+        }
+    }
+
+    private func renderPDF(html: String, to url: URL) {
+        // US Letter at 72 dpi; the print operation paginates the content.
+        let web = WKWebView(frame: NSRect(x: 0, y: 0, width: 612, height: 792))
+        web.navigationDelegate = self
+        pdfWebView = web
+        pdfURL = url
+        web.loadHTMLString(html, baseURL: nil)
+    }
+
+    // MARK: - WKNavigationDelegate (PDF export only)
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        guard webView === pdfWebView, let url = pdfURL else { return }
+        defer { pdfWebView = nil; pdfURL = nil }
+
+        let info = NSPrintInfo(dictionary: [
+            .jobDisposition: NSPrintInfo.JobDisposition.save,
+            .jobSavingURL: url,
+        ])
+        info.paperSize = NSSize(width: 612, height: 792)
+        info.topMargin = 36; info.bottomMargin = 36
+        info.leftMargin = 36; info.rightMargin = 36
+        info.horizontalPagination = .fit
+        info.verticalPagination = .automatic
+
+        let operation = webView.printOperation(with: info)
+        operation.showsPrintPanel = false
+        operation.showsProgressPanel = false
+        operation.run()
     }
 
     // MARK: - NSWindowDelegate
