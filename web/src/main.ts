@@ -596,10 +596,16 @@ const HELP_SECTIONS: HelpSection[] = [
     ["- ␣", "Bulleted list"],
     ["1. ␣", "Numbered list"],
     ["> ␣", "Block quote"],
-    ["``` ␣", "Code block"],
+    ["```lang", "Code block (highlighted)"],
     ["--- ", "Horizontal rule"],
     ["**text**", "Bold"],
     ["*text*", "Italic"],
+  ]},
+  { title: "Insert", rows: [
+    ["/", "Insert menu (any block)"],
+    ["$…$  ·  $$…$$", "Math — inline · block"],
+    ["[^1]", "Footnote"],
+    ["| a | b |", "Table"],
   ]},
   { title: "Format", rows: [
     ["⌘B", "Bold"],
