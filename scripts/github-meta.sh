@@ -12,19 +12,12 @@ gh repo edit "$REPO" \
 gh repo edit "$REPO" \
   --add-topic markdown \
   --add-topic markdown-editor \
-  --add-topic wysiwyg \
   --add-topic wysiwyg-editor \
-  --add-topic macos \
   --add-topic macos-app \
-  --add-topic swift \
-  --add-topic appkit \
   --add-topic milkdown \
   --add-topic prosemirror \
   --add-topic commonmark \
   --add-topic gfm \
-  --add-topic text-editor \
-  --add-topic note-taking \
-  --add-topic quicklook \
-  --add-topic wkwebview
+  --add-topic text-editor
 
 echo "✅ Description and topics updated for $REPO"
