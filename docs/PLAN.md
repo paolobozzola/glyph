@@ -66,7 +66,28 @@ over a custom `app://` scheme handler.
 - [x] YAML frontmatter editable properties panel (simple key/value; complex YAML preserved raw)
 
 ### v2.0
-- [ ] Sparkle auto-updates (appcast + EdDSA signing; host on GitHub Releases)
+Theme set chosen with the owner. **AI assist is deliberately excluded** to preserve the
+"fully offline — nothing leaves your Mac" principle.
+
+- [ ] **Sparkle auto-updates** (appcast + EdDSA signing; host on GitHub Releases)
+- [ ] **A — Richer content** (Milkdown mostly ships these; stays plain Markdown)
+  - [ ] Syntax-highlighted code blocks + language picker (CodeMirror feature)
+  - [ ] LaTeX math (`$…$`, `$$…$$`) live (Latex feature)
+  - [ ] Slash `/` command menu to insert blocks (BlockEdit feature)
+  - [ ] Diagrams (Mermaid) and footnotes
+- [ ] **B — Faster workflow**
+  - [ ] Command palette (⌘K): run commands + jump to headings
+  - [ ] New-document templates (frontmatter + skeleton)
+  - [ ] Smart paste (URL→link on selection; HTML→clean Markdown)
+  - [ ] Table row/column controls
+- [ ] **C — macOS integration** (the "only-on-Mac" headline)
+  - [ ] Spotlight indexing of `.md` content
+  - [ ] Shortcuts.app / App Intents (New note, Append, Export…)
+  - [ ] System Services + menu-bar quick capture
+  - [ ] *(iCloud/Handoff parked: needs sandbox, conflicts with direct-download)*
+- [ ] **Rendered-Markdown customization** — editor themes & fonts, custom CSS for the
+      writing surface (and shared with export/Quick Look where sensible)
+- [ ] ~~AI assist~~ — excluded by design (offline principle)
 
 ### Out of scope for a single-file app (revisit only if moving toward a vault)
 - Folder sidebar, wiki-links/backlinks, global search, tags, plugin system
