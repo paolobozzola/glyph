@@ -1,0 +1,50 @@
+<svg width="1280" height="440" viewBox="0 0 1280 440" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#201D2B"/>
+      <stop offset="1" stop-color="#15131C"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.22" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#E6B450" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#E6B450" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1280" height="440" fill="url(#bg)"/>
+  <rect width="1280" height="440" fill="url(#glow)"/>
+
+  <!-- App-icon tile with the G mark -->
+  <g transform="translate(150,120)">
+    <rect width="200" height="200" rx="46" fill="#1A1822" stroke="#322E40" stroke-width="1"/>
+    <g transform="translate(20,20) scale(0.3125)">
+      <path d="M 329.9 161.4 A 120 120 0 1 0 372.4 285" fill="none" stroke="#F5F1E8" stroke-width="46" stroke-linecap="round"/>
+      <rect x="256" y="233" width="116" height="46" rx="23" fill="#E6B450"/>
+    </g>
+  </g>
+
+  <!-- Wordmark + tagline -->
+  <g transform="translate(420,0)">
+    <text x="0" y="218" font-family="Georgia, 'Times New Roman', serif" font-size="116" font-weight="700" fill="#F5F1E8" letter-spacing="-2">Glyph</text>
+    <text x="4" y="270" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="27" fill="#9A93A8">A pure WYSIWYG Markdown editor for macOS</text>
+
+    <!-- feature chips -->
+    <g font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="17" fill="#C8C4D4">
+      <g transform="translate(4,310)">
+        <rect width="150" height="38" rx="19" fill="#2A2735"/>
+        <text x="75" y="25" text-anchor="middle">Edit rich</text>
+      </g>
+      <g transform="translate(166,310)">
+        <rect width="172" height="38" rx="19" fill="#2A2735"/>
+        <text x="86" y="25" text-anchor="middle">Save plain .md</text>
+      </g>
+      <g transform="translate(350,310)">
+        <rect width="166" height="38" rx="19" fill="#2A2735"/>
+        <text x="83" y="25" text-anchor="middle">Quick Look</text>
+      </g>
+      <g transform="translate(528,310)">
+        <rect width="150" height="38" rx="19" fill="#2A2735"/>
+        <text x="75" y="25" text-anchor="middle">Native</text>
+      </g>
+    </g>
+  </g>
+</svg>

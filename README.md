@@ -1,24 +1,87 @@
-# Glyph
+<p align="center">
+  <img src="docs/images/banner.png" alt="Glyph — a pure WYSIWYG Markdown editor for macOS" width="100%">
+</p>
 
-A pure **WYSIWYG Markdown editor for macOS**. Open, read, and edit `.md` files with live
-rich-text rendering — while the file on disk stays plain, portable Markdown.
+<p align="center">
+  <strong>Edit rich. Save plain.</strong><br>
+  A native macOS Markdown editor with live rich-text editing — while the file on disk stays clean, portable Markdown.
+</p>
 
-> Status: **planning**. No application code yet. See [`docs/PLAN.md`](docs/PLAN.md) and
-> [`CLAUDE.md`](CLAUDE.md).
+<p align="center">
+  <img src="https://img.shields.io/badge/macOS-15%2B-1A1822?logo=apple&logoColor=white" alt="macOS 15+">
+  <img src="https://img.shields.io/badge/Swift-AppKit-E6B450?logo=swift&logoColor=white" alt="Swift / AppKit">
+  <img src="https://img.shields.io/badge/Markdown-CommonMark%20%2B%20GFM-6B6678" alt="CommonMark + GFM">
+  <a href="https://www.buymeacoffee.com/paolobozzola"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support-E6B450?logo=buymeacoffee&logoColor=black" alt="Buy Me a Coffee"></a>
+</p>
 
-## At a glance
+<p align="center">
+  <img src="docs/images/screenshot.png" alt="Glyph editing a Markdown document" width="88%">
+</p>
 
-- **Native shell** — Swift + SwiftUI `DocumentGroup` (document-based, tabbed).
-- **WYSIWYG engine** — Milkdown (ProseMirror + remark) in a `WKWebView`; Markdown-first round-trip.
-- **The file is the source of truth** — never editor-internal JSON on disk.
-- **Quick Look** — spacebar preview of `.md` in Finder.
-- **Direct download** — Developer ID, notarized, DMG; Sparkle for updates.
+---
 
-## Repo layout
+## Why Glyph
 
+Most Markdown tools make you choose: a raw-text editor with a separate preview, or a rich editor that saves its own proprietary format. **Glyph’s guiding principle is that the `.md` file is the single source of truth** — you edit rich, formatted text, and what lands on disk is plain, portable Markdown that any other tool can read. No lock-in, no proprietary blobs, no diff noise.
+
+It’s a genuinely **native macOS app** (AppKit document model) wrapping a Markdown-first editing engine, so you get system tabs, autosave, Versions, Quick Look, printing, and the share sheet — alongside a fast, modern WYSIWYG canvas.
+
+## Features
+
+- **True WYSIWYG** — headings, bold/italic/strikethrough, lists & task lists, tables, block quotes, inline & fenced code, links, images, horizontal rules — all live (CommonMark + GFM).
+- **Type or click** — Markdown input rules (`# `, `- `, `> `, ` ``` `), a selection toolbar with **H1/H2/H3**, and full native menu shortcuts.
+- **Find & Replace** with match highlighting, in-editor.
+- **Document outline**, live **word / character / reading-time** count, and a distraction-free **focus mode**.
+- **Source ⇄ WYSIWYG** toggle for when you want the raw Markdown.
+- **Editable YAML frontmatter** — front-matter shown as a properties panel, kept as plain YAML on save.
+- **Images** paste or drag right in — saved beside your document and linked relatively.
+- **Export** to standalone HTML or PDF.
+- **macOS-native throughout** — document tabs, autosave-in-place + Versions, recent files, light/dark, spellcheck, printing, Share menu, and **Quick Look preview + Finder thumbnails**.
+- **Private by design** — the editor runs fully offline; nothing leaves your Mac.
+
+## Install
+
+Glyph is distributed as a notarized, direct-download DMG (no sandbox → full filesystem access).
+
+> **Pre-release.** Build from source today (below); signed DMG releases are produced with `make dist` (see [`docs/RELEASE.md`](docs/RELEASE.md)).
+
+## Build from source
+
+Requirements: **Xcode 16+**, **Node 20+**, and [XcodeGen](https://github.com/yonsm/XcodeGen) (`brew install xcodegen`).
+
+```sh
+git clone https://github.com/paolobozzola/glyph.git
+cd glyph
+make run        # builds the editor bundle + app, then launches it
 ```
-CLAUDE.md          Locked stack decisions, bridge contract, project memory
-docs/PLAN.md       Roadmap, architecture, feature set, build order
-docs/SHELL.md      Shell build spec: targets, document model, bridge, milestones
-assets/logo/       Brand marks (SVG) + AppIcon.icns / .iconset
-```
+
+`make web` rebuilds just the editor bundle; `make open` opens the generated Xcode project. See [`docs/SETUP.md`](docs/SETUP.md) for details.
+
+## How it’s built
+
+| Layer | Choice |
+|-------|--------|
+| App shell | Swift + AppKit `NSDocument` (native tabs, autosave, Versions) |
+| Editing engine | [Milkdown](https://milkdown.dev) (ProseMirror + remark) in a `WKWebView` |
+| Markdown | CommonMark + GFM, faithful round-trip via remark |
+| Quick Look | Preview + Thumbnail app extensions sharing one renderer |
+| Distribution | Developer ID, notarized, DMG |
+
+Architecture and decisions are documented in [`CLAUDE.md`](CLAUDE.md) and [`docs/`](docs/).
+
+## Roadmap
+
+- ✅ **v1.x** — full editor, find/replace, outline, focus mode, export, images, frontmatter, Quick Look, notarized DMG.
+- 🔜 **v2.0** — Sparkle auto-updates.
+
+## Support
+
+Glyph is built and maintained by one person. If it’s useful to you, you can support its development:
+
+<a href="https://www.buymeacoffee.com/paolobozzola">
+  <img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-paolobozzola-E6B450?logo=buymeacoffee&logoColor=black&style=for-the-badge" alt="Buy Me a Coffee">
+</a>
+
+## License
+
+© 2026 Paolo Bozzola. All rights reserved.
