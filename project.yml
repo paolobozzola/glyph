@@ -10,8 +10,8 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.0"          # Swift 5 language mode for M0; move to 6 later
-    MARKETING_VERSION: "0.1.0"
-    CURRENT_PROJECT_VERSION: "1"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "2"
     # Local dev signing (free Apple Development cert).
     DEVELOPMENT_TEAM: "537QQR9WVW"
     CODE_SIGN_STYLE: Automatic
@@ -86,3 +86,16 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.paolobozzola.glyph.QuickLookThumbnail
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: QuickLook/Glyph-QuickLook.entitlements
+
+# Explicit shared scheme so `xcodebuild -scheme Glyph` works on a freshly generated
+# project — without this, schemes only appear after opening the project in Xcode, so
+# `make run` / `make dist` would fail on a clean `xcodegen generate`.
+schemes:
+  Glyph:
+    build:
+      targets:
+        Glyph: all
+    run:
+      config: Debug
+    archive:
+      config: Release

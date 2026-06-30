@@ -8,6 +8,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/paolobozzola/glyph/releases/latest"><img src="https://img.shields.io/github/v/release/paolobozzola/glyph?include_prereleases&sort=semver&color=E6B450&label=download" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/macOS-15%2B-1A1822?logo=apple&logoColor=white" alt="macOS 15+">
   <img src="https://img.shields.io/badge/Swift-AppKit-E6B450?logo=swift&logoColor=white" alt="Swift / AppKit">
   <img src="https://img.shields.io/badge/Markdown-CommonMark%20%2B%20GFM-6B6678" alt="CommonMark + GFM">
@@ -43,7 +44,9 @@ It’s a genuinely **native macOS app** (AppKit document model) wrapping a Markd
 
 Glyph is distributed as a notarized, direct-download DMG (no sandbox → full filesystem access).
 
-> **Pre-release.** Build from source today (below); signed DMG releases are produced with `make dist` (see [`docs/RELEASE.md`](docs/RELEASE.md)).
+**[⬇︎ Download the latest release](https://github.com/paolobozzola/glyph/releases/latest)** — open `Glyph.dmg` and drag Glyph to **Applications**. macOS 15+.
+
+> **Release candidate.** `v1.0.0-rc1` is feature-complete and notarized; expect minor polish before the final `v1.0.0`. Prefer to build it yourself? See [Build from source](#build-from-source) below.
 
 ## Build from source
 

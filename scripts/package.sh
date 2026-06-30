@@ -64,6 +64,11 @@ hdiutil create -volname "$APP_NAME" -srcfolder "$STAGING" -ov -format UDZO "$DMG
 rm -rf "$STAGING"
 echo "  dmg: $DMG"
 
+echo "▶ Signing the DMG (so Gatekeeper has a primary signature to validate)…"
+# Without this the DMG itself carries "no usable signature" and `spctl -t open` rejects it,
+# even though the app inside is notarized. Sign the container, then notarize + staple it.
+codesign --force --timestamp --sign "$DEV_ID" "$DMG"
+
 echo "▶ Notarizing (this uploads to Apple and waits)…"
 xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait
 
