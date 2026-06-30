@@ -9,9 +9,12 @@ live rich-text rendering while the file on disk stays plain, portable Markdown.
 - **Status:** M0–M4 working. Editor, documents, formatting, find/replace, spelling, print,
   share, and **Quick Look preview + thumbnail now activate** (notarized Developer ID build;
   QL extensions must be sandboxed and must NOT carry `network.client` — see `docs/SETUP.md`).
-  Release via `make dist` (`docs/RELEASE.md`). **v1.x complete**: HTML/PDF export, image
-  paste/drag, outline + word count + focus mode, in-app cheat sheet, source⇄WYSIWYG toggle,
-  YAML frontmatter properties panel. Sparkle auto-updates deferred to **v2.0**.
+  Release via `make dist` (`docs/RELEASE.md`). **v1.0 feature-complete** — also shipping
+  HTML/PDF export, image paste/drag, outline + word count + focus mode, in-app cheat sheet,
+  source⇄WYSIWYG toggle, YAML frontmatter properties panel. **First public build:
+  `v1.0.0-rc1`** (GitHub Releases, notarized DMG; `MARKETING_VERSION` is `1.0.0`, the `-rc1`
+  lives in the git tag / release name). Final `v1.0.0` after RC polish. Sparkle
+  auto-updates deferred to **v2.0**.
   Local dev: `make run` (recompile + launch); `make web` rebuilds the editor bundle.
 
 ## Product principle
@@ -38,7 +41,7 @@ JSON) to disk — only Markdown.
 File-type association / default-app (Markdown UTI) · Document Versions + autosave-in-place ·
 window/state restoration · in-editor system text services (spellcheck, emoji picker, Look Up,
 dictation) · Printing (⌘P) · Quick Look **preview** + **thumbnail** · Share menu
-(`NSSharingServicePicker`). Deferred to v1.x: Spotlight indexing, App Intents/Shortcuts,
+(`NSSharingServicePicker`). Deferred to **v2.0**: Spotlight indexing, App Intents/Shortcuts,
 system Services provider, iCloud (needs sandbox — conflicts with direct-download).
 
 Architecture chosen: **hybrid** (native shell + embedded web engine). Rejected pure-native

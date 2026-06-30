@@ -74,7 +74,7 @@ Architecture and decisions are documented in [`CLAUDE.md`](CLAUDE.md) and [`docs
 
 ## Roadmap
 
-- ✅ **v1.x** — full editor, find/replace, outline, focus mode, export, images, frontmatter, Quick Look, notarized DMG.
+- 🚀 **v1.0** — *shipping now as [`v1.0.0-rc1`](https://github.com/paolobozzola/glyph/releases/latest)* — full editor, find/replace, outline, focus mode, export, images, frontmatter, Quick Look, notarized DMG. Final `v1.0.0` after release-candidate polish.
 - 🔜 **v2.0** — richer content (code highlighting, LaTeX, slash menu, diagrams), command palette & templates, theming, macOS integration (Spotlight, Shortcuts), and Sparkle auto-updates. See [`docs/V2.md`](docs/V2.md).
 
 ## Support
