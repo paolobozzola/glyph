@@ -6,7 +6,7 @@ live rich-text rendering while the file on disk stays plain, portable Markdown.
 - **Name:** Glyph
 - **Owner:** paolobozzola (paolo.bozzola@moviri.com)
 - **Repo:** github.com/paolobozzola/glyph (private initially)
-- **Status:** M0–M4 working. Editor, documents, formatting, find/replace, spelling, print,
+- **Status:** v1.0 shipped. Editor, documents, formatting, find/replace, spelling, print,
   share, and **Quick Look preview + thumbnail now activate** (notarized Developer ID build;
   QL extensions must be sandboxed and must NOT carry `network.client` — see `docs/SETUP.md`).
   Release via `make dist` (`docs/RELEASE.md`). **v1.0 feature-complete** — also shipping
@@ -32,7 +32,7 @@ JSON) to disk — only Markdown.
 | Markdown flavor | CommonMark + GFM (`remark-gfm`) | Tables, task lists, strikethrough, autolinks |
 | Editor bundle | Vite build, bundled in-app, loaded via custom `WKURLSchemeHandler` (`app://`) | No network at runtime; avoids `file://` WebKit restrictions |
 | Deployment target | **macOS 15 Sequoia** minimum | Modern SwiftUI APIs, reasonable reach |
-| Document model | **AppKit `NSDocument`** (programmatic menu, `main.swift` entry) | Decouples dirty-tracking (`updateChangeCount`) from undo so Milkdown keeps ⌘Z; gives autosave-in-place, Versions, tabs, recent files. *(Pivoted from SwiftUI `DocumentGroup` at M1 — SwiftUI couples dirty to the undo manager.)* |
+| Document model | **AppKit `NSDocument`** (programmatic menu, `main.swift` entry) | Decouples dirty-tracking (`updateChangeCount`) from undo so Milkdown keeps ⌘Z; gives autosave-in-place, Versions, tabs, recent files. *(Pivoted from SwiftUI `DocumentGroup` early in the v1.0 build — SwiftUI couples dirty to the undo manager.)* |
 | Quick Look | Two app-extension targets: **Preview** + **Thumbnail** | Spacebar preview *and* rendered Finder thumbnails |
 | Shared rendering | Local Swift package **`GlyphRender`** (Markdown→styled HTML) used by app + both QL extensions | One renderer, consistent look everywhere |
 | Distribution | Developer ID + notarize + staple, DMG; Sparkle for updates | Direct download, no sandbox → full filesystem access |
@@ -55,7 +55,7 @@ TextKit (editor too costly to hand-build) and Tauri/Electron (not Mac-idiomatic 
 - Native menu/shortcuts (Cmd+B/I, headings, save) call editor commands over the bridge.
 - ProseMirror owns undo/redo (Cmd+Z routed to it, not native).
 
-## Markdown round-trip — policy (decided at M2)
+## Markdown round-trip — policy (decided during v1.0)
 
 Milkdown re-serializes via remark, so saving normalizes. We configure
 `remarkStringifyOptionsCtx` in the editor bundle: **`bullet: "-"`, `rule: "-"`,

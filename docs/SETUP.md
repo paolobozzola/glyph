@@ -1,6 +1,6 @@
-# Glyph — Local Setup (M0)
+# Glyph — Local Setup
 
-How to build and run the M0 bridge spike on your Mac.
+How to build and run Glyph from source on your Mac.
 
 ## Prerequisites
 
@@ -35,7 +35,7 @@ What `make` does:
 > Both `Glyph.xcodeproj` and `Glyph/Resources/editor/` are generated and git-ignored.
 > Re-run `make` after pulling changes or editing `web/` or `project.yml`.
 
-## What M0 proves
+## What you should see
 
 A document window opens showing the Milkdown WYSIWYG editor. As you type, the Swift host
 receives debounced Markdown over the bridge — visible in the Xcode console / Console.app:
@@ -53,12 +53,12 @@ That is the round-trip working: **edits in the web editor → Markdown back in S
 3. `diff tests/corpus/sample.md /path/to/saved.md`
 
 Differences are Milkdown's normalization (list markers, wrapping, trailing whitespace).
-Decide the normalization policy here before building M1 features on top (see CLAUDE.md).
+The normalization policy Glyph treats as canonical is documented in CLAUDE.md
+(*Markdown round-trip — policy*).
 
-## Not in M0 yet
+## What's next
 
-Saving/dirty-state, undo wiring, native menus, find & replace, Quick Look — those are
-M1+ in `docs/PLAN.md`. M0 is intentionally just the bridge.
+This builds the full v1.0 app. Planned work beyond it lives in [`docs/V2.md`](V2.md).
 
 ## Quick Look (preview + thumbnail)
 
@@ -74,7 +74,7 @@ pluginkit -m | grep -i glyph     # should now list the preview + thumbnail exten
 ```
 
 Then in Finder: select a `.md` file and press **space** (preview), and view it in a folder
-(thumbnail). Reliable activation really wants Developer ID signing — that's **M4**.
+(thumbnail). Reliable activation really wants Developer ID signing + notarization (`make dist`).
 
 ### Quick Look gotchas (learned the hard way)
 
@@ -99,7 +99,7 @@ Notes:
 - Ad-hoc builds in DerivedData are **not** discovered by `pluginkit` — install to /Applications.
 - **Free Personal-Team (Apple Development) signing runs the app fine but did not get the QL
   extensions registered by `pluginkit` on macOS Tahoe.** Reliable QL extension registration
-  in practice needs **Developer ID + notarization** (M4). The extension code itself is
+  in practice needs **Developer ID + notarization** (`make dist`). The extension code itself is
   verified (preview renders in a browser; thumbnail via a bitmap harness).
 - **UTI ownership matters:** on a Mac with iA Writer installed, `.md` is typed as
   `net.ia.markdown` (not `net.daringfireball.markdown`). Glyph now declares

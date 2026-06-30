@@ -48,7 +48,7 @@ over a custom `app://` scheme handler.
 
 #### MVP native macOS features
 - [x] **File-type association / default app** — declare Markdown UTI; double-click & "Open With" → Glyph
-- [x] **Quick Look preview** — Preview extension (WKWebView + markdown-it bundle over app://); renderer verified in browser. *Runtime activation needs a signed app installed in /Applications (M4).*
+- [x] **Quick Look preview** — Preview extension (WKWebView + markdown-it bundle over app://); renderer verified in browser. *Runtime activation needs the signed, notarized build installed in /Applications.*
 - [x] **Quick Look thumbnail** — Thumbnail extension (native CGContext text-on-page); drawing verified via bitmap harness. *Same activation caveat.*
 - [x] **Document Versions + autosave-in-place** — `NSDocument.autosavesInPlace`; Revert to Saved
 - [x] **Window & state restoration** — native window tabbing; system reopen-on-relaunch

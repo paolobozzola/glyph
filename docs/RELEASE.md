@@ -1,4 +1,4 @@
-# Glyph — Release (M4: sign · notarize · DMG)
+# Glyph — Release (sign · notarize · DMG)
 
 Produces a notarized `dist/Glyph.dmg` for direct download. Notarizing also makes the
 **Quick Look** preview/thumbnail extensions register reliably in Finder.
