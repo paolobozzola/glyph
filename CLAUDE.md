@@ -34,7 +34,7 @@ JSON) to disk — only Markdown.
 | Deployment target | **macOS 15 Sequoia** minimum | Modern SwiftUI APIs, reasonable reach |
 | Document model | **AppKit `NSDocument`** (programmatic menu, `main.swift` entry) | Decouples dirty-tracking (`updateChangeCount`) from undo so Milkdown keeps ⌘Z; gives autosave-in-place, Versions, tabs, recent files. *(Pivoted from SwiftUI `DocumentGroup` early in the v1.0 build — SwiftUI couples dirty to the undo manager.)* |
 | Quick Look | Two app-extension targets: **Preview** + **Thumbnail** | Spacebar preview *and* rendered Finder thumbnails |
-| Shared rendering | Local Swift package **`GlyphRender`** (Markdown→styled HTML) used by app + both QL extensions | One renderer, consistent look everywhere |
+| Quick Look rendering | **Native, no web view** — preview = Markdown→`NSAttributedString` in an `NSTextView` (`MarkdownPreviewRenderer`); thumbnail = Core Graphics text-on-page | A `WKWebView` inside the sandboxed + hardened QL extension can't launch WebKit's helper processes → `load()` hangs on a spinning cog. Native rendering is synchronous, can't hang, needs no extra entitlements. (The **editor** app still uses Milkdown/`WKWebView` — it's non-sandboxed.) |
 | Distribution | Developer ID + notarize + staple, DMG; Sparkle for updates | Direct download, no sandbox → full filesystem access |
 
 ### MVP native macOS features (all in)
