@@ -23,6 +23,21 @@ function applyTheme(): void {
 applyTheme();
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
 
+// Harmonic heading scale — keep in sync with web/src/main.ts so the preview matches the
+// editor. The frame theme's default steps are only ~1.17 apart (H1≈H2); this 1.25 modular
+// scale anchored to the 16px body makes each level clearly distinct.
+const headingScale = document.createElement("style");
+headingScale.id = "glyph-heading-scale";
+headingScale.textContent = `
+.milkdown .ProseMirror h1{font-size:49px;line-height:1.15}
+.milkdown .ProseMirror h2{font-size:39px;line-height:1.2}
+.milkdown .ProseMirror h3{font-size:31px;line-height:1.25}
+.milkdown .ProseMirror h4{font-size:25px;line-height:1.3}
+.milkdown .ProseMirror h5{font-size:20px;line-height:1.4}
+.milkdown .ProseMirror h6{font-size:16px;line-height:1.5}
+`;
+document.head.appendChild(headingScale);
+
 // The editor surfaces YAML frontmatter in a properties panel rather than the body, so
 // strip a leading frontmatter block to match what the editor shows.
 function stripFrontmatter(text: string): string {

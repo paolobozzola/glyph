@@ -25,8 +25,10 @@
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.productivity</string>
 
-    <!-- Import the de-facto Markdown UTI (docs/SHELL.md §5) -->
-    <key>UTImportedTypeDeclarations</key>
+    <!-- Export the de-facto Markdown UTI so Glyph authoritatively defines `.md` →
+         net.daringfireball.markdown (docs/SHELL.md §5). Exporting (vs importing) makes the
+         association stick so Finder lists Glyph under "Open With" and uses its Quick Look. -->
+    <key>UTExportedTypeDeclarations</key>
     <array>
         <dict>
             <key>UTTypeIdentifier</key>
@@ -65,7 +67,7 @@
             <key>CFBundleTypeRole</key>
             <string>Editor</string>
             <key>LSHandlerRank</key>
-            <string>Alternate</string>
+            <string>Owner</string>
             <key>NSDocumentClass</key>
             <string>$(PRODUCT_MODULE_NAME).MarkdownDocument</string>
         </dict>

@@ -91,6 +91,22 @@ function applyTheme(mode: ThemeMode): void {
 }
 applyTheme(window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
 
+// Harmonic heading scale — the frame theme's default steps (42/36/32/28/24/18) are only a
+// ~1.17 ratio apart, so H1 and H2 look almost identical. Override with a 1.25 (major-third)
+// modular scale anchored to the 16px body so each level is clearly distinct. Appended after
+// the theme style (equal specificity → later rule wins). Keep in sync with web-preview/.
+const headingScale = document.createElement("style");
+headingScale.id = "glyph-heading-scale";
+headingScale.textContent = `
+.milkdown .ProseMirror h1{font-size:49px;line-height:1.15}
+.milkdown .ProseMirror h2{font-size:39px;line-height:1.2}
+.milkdown .ProseMirror h3{font-size:31px;line-height:1.25}
+.milkdown .ProseMirror h4{font-size:25px;line-height:1.3}
+.milkdown .ProseMirror h5{font-size:20px;line-height:1.4}
+.milkdown .ProseMirror h6{font-size:16px;line-height:1.5}
+`;
+document.head.appendChild(headingScale);
+
 // --- host messaging ------------------------------------------------------
 function postToHost(msg: unknown): void {
   window.webkit?.messageHandlers?.glyph?.postMessage(msg);
