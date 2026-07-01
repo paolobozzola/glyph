@@ -31,6 +31,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let md = UTType("net.daringfireball.markdown") {
             NSWorkspace.shared.setDefaultApplication(at: Bundle.main.bundleURL, toOpen: md) { _ in }
         }
+        // Nudge Quick Look to adopt our just-registered preview extension. quicklookd caches
+        // the generator→type binding, so a Mac that previewed a .md before installing Glyph
+        // keeps showing raw text until the next logout. Refresh once (after a short delay so
+        // pkd has registered the extension) so previews work without the user running
+        // `qlmanage -r` themselves.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+            self?.refreshQuickLook()
+        }
+    }
+
+    private func refreshQuickLook() {
+        for args in [["-r"], ["-r", "cache"]] {
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: "/usr/bin/qlmanage")
+            p.arguments = args
+            p.standardOutput = FileHandle.nullDevice
+            p.standardError = FileHandle.nullDevice
+            try? p.run()
+        }
     }
 
     // Document-based app: open an untitled document on launch / dock click.
