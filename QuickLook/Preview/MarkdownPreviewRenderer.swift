@@ -128,18 +128,12 @@ enum MarkdownPreviewRenderer {
                                                    .foregroundColor: NSColor.tertiaryLabelColor,
                                                    .paragraphStyle: p])
         }
-        // Code block
+        // Code block — a single full-width shaded block (via NSTextBlock), not a ragged
+        // per-line background box.
         if kinds.contains(where: { if case .codeBlock = $0 { return true }; return false }) {
-            let p = NSMutableParagraphStyle()
-            p.firstLineHeadIndent = 12; p.headIndent = 12
-            p.paragraphSpacing = 8; p.paragraphSpacingBefore = 4
-            let text = block.inlines.map(\.text).joined()
-            return NSAttributedString(
-                string: text.hasSuffix("\n") ? text : text + "\n",
-                attributes: [.font: NSFont.monospacedSystemFont(ofSize: bodySize - 1, weight: .regular),
-                             .foregroundColor: NSColor.textColor,
-                             .backgroundColor: NSColor.quaternaryLabelColor.withAlphaComponent(0.35),
-                             .paragraphStyle: p])
+            var text = block.inlines.map(\.text).joined()
+            while text.hasSuffix("\n") { text.removeLast() }
+            return codeBlockString(text)
         }
         // List item
         if let ordinal = kinds.listItemOrdinal {
@@ -307,12 +301,9 @@ enum MarkdownPreviewRenderer {
 
             var attrs: [NSAttributedString.Key: Any] = [
                 .font: font,
-                .foregroundColor: color,
+                .foregroundColor: isCode ? codeInlineColor : color,
                 .paragraphStyle: paragraphStyle,
             ]
-            if isCode {
-                attrs[.backgroundColor] = NSColor.quaternaryLabelColor.withAlphaComponent(0.35)
-            }
             if inline.intent.contains(.strikethrough) {
                 attrs[.strikethroughStyle] = NSUnderlineStyle.single.rawValue
             }
@@ -324,6 +315,32 @@ enum MarkdownPreviewRenderer {
             out.append(NSAttributedString(string: inline.text, attributes: attrs))
         }
         return out
+    }
+
+    // MARK: - Code
+
+    /// Inline `code` — colored monospace (like the editor), no background box.
+    private static let codeInlineColor = NSColor.systemRed
+
+    /// A fenced code block as one full-width shaded region (NSTextBlock fills the whole
+    /// paragraph rectangle, so it reads as a single block instead of ragged per-line boxes).
+    private static func codeBlockString(_ text: String) -> NSAttributedString {
+        let block = NSTextBlock()
+        block.setContentWidth(100, type: .percentageValueType)
+        block.backgroundColor = NSColor.textColor.withAlphaComponent(0.055)
+        block.setWidth(10, type: .absoluteValueType, for: .padding)
+        let p = NSMutableParagraphStyle()
+        p.textBlocks = [block]
+        p.paragraphSpacingBefore = 10
+        p.paragraphSpacing = 10
+        p.lineSpacing = 2
+        // Join lines with U+2028 (line separator) so the block is ONE paragraph — otherwise
+        // paragraphSpacing lands between every code line and the block looks double-spaced.
+        let oneParagraph = text.replacingOccurrences(of: "\n", with: "\u{2028}")
+        return NSAttributedString(string: oneParagraph + "\n", attributes: [
+            .font: NSFont.monospacedSystemFont(ofSize: bodySize - 1, weight: .regular),
+            .foregroundColor: NSColor.textColor,
+            .paragraphStyle: p])
     }
 
     // MARK: - Fonts / styles
