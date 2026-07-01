@@ -1,4 +1,6 @@
 import AppKit
+import CoreServices
+import UniformTypeIdentifiers
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
@@ -8,6 +10,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.activate(ignoringOtherApps: true)
+        registerMarkdownAssociation()
+    }
+
+    /// Make Glyph a recognized (and default) handler for Markdown without the user having
+    /// to run `lsregister` by hand.
+    ///
+    /// Just installing + launching doesn't reliably make LaunchServices pick up our type
+    /// declarations — especially on machines that have seen several builds (stale LS cache),
+    /// where `.md` files then show Glyph greyed-out in "Open With" and won't open. Force a
+    /// self-registration every launch (the programmatic equivalent of `lsregister -f`), and
+    /// on first launch claim the default handler so files Glyph creates reopen in Glyph.
+    private func registerMarkdownAssociation() {
+        LSRegisterURL(Bundle.main.bundleURL as CFURL, true)   // refresh our LS registration
+
+        let key = "glyph.didClaimMarkdownDefault"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        UserDefaults.standard.set(true, forKey: key)
+        // Claim the Markdown type as default once — never fight a later user choice.
+        if let md = UTType("net.daringfireball.markdown") {
+            NSWorkspace.shared.setDefaultApplication(at: Bundle.main.bundleURL, toOpen: md) { _ in }
+        }
     }
 
     // Document-based app: open an untitled document on launch / dock click.
