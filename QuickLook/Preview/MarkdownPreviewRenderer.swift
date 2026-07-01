@@ -33,8 +33,22 @@ enum MarkdownPreviewRenderer {
         }
 
         let out = NSMutableAttributedString()
-        for block in blocks(of: parsed) {
-            out.append(render(block: block))
+        let blks = blocks(of: parsed)
+        var i = 0
+        while i < blks.count {
+            // A GFM table arrives as many one-cell blocks; batch them into rows.
+            if let info = tableInfo(blks[i]) {
+                var cells: [(TableInfo, [Inline])] = []
+                let tableId = info.tableId
+                while i < blks.count, let inf = tableInfo(blks[i]), inf.tableId == tableId {
+                    cells.append((inf, blks[i].inlines))
+                    i += 1
+                }
+                out.append(renderTable(cells))
+            } else {
+                out.append(render(block: blks[i]))
+                i += 1
+            }
         }
         if out.length == 0 {
             out.append(NSAttributedString(string: " "))
@@ -136,13 +150,27 @@ enum MarkdownPreviewRenderer {
             p.headIndent = indent + 18
             p.tabStops = [NSTextTab(textAlignment: .left, location: indent + 18)]
             p.paragraphSpacing = 3
-            let marker = kinds.isOrdered ? "\(ordinal).\t" : "•\t"
+
+            // GFM task list: "[ ] …" / "[x] …" → checkbox glyph, with the marker stripped.
+            var inlines = block.inlines
+            var marker = kinds.isOrdered ? "\(ordinal).\t" : "•\t"
+            if let first = inlines.first {
+                if first.text.hasPrefix("[ ] ") {
+                    marker = "☐\t"
+                    inlines[0] = Inline(text: String(first.text.dropFirst(4)),
+                                        intent: first.intent, link: first.link)
+                } else if first.text.hasPrefix("[x] ") || first.text.hasPrefix("[X] ") {
+                    marker = "☑\t"
+                    inlines[0] = Inline(text: String(first.text.dropFirst(4)),
+                                        intent: first.intent, link: first.link)
+                }
+            }
             let line = NSMutableAttributedString(
                 string: marker,
                 attributes: [.font: NSFont.systemFont(ofSize: bodySize),
                              .foregroundColor: NSColor.secondaryLabelColor,
                              .paragraphStyle: p])
-            line.append(inlineRun(block.inlines, baseFont: NSFont.systemFont(ofSize: bodySize),
+            line.append(inlineRun(inlines, baseFont: NSFont.systemFont(ofSize: bodySize),
                                   paragraphStyle: p))
             line.append(NSAttributedString(string: "\n"))
             return line
@@ -163,6 +191,91 @@ enum MarkdownPreviewRenderer {
         return paragraph(inlines: block.inlines,
                          baseFont: NSFont.systemFont(ofSize: bodySize),
                          style: p)
+    }
+
+    // MARK: - Tables
+
+    private struct TableInfo {
+        let tableId: Int
+        let row: Int      // -1 for the header row
+        let column: Int
+        var isHeader: Bool { row < 0 }
+    }
+
+    /// Return table position for a block whose intent includes a table cell, else nil.
+    private static func tableInfo(_ block: Block) -> TableInfo? {
+        guard let components = block.intent?.components else { return nil }
+        var tableId: Int?, column: Int?, row = 0, isHeader = false, sawCell = false
+        for c in components {
+            switch c.kind {
+            case .table:                        tableId = c.identity
+            case .tableHeaderRow:               isHeader = true
+            case .tableRow(let idx):            row = idx
+            case .tableCell(let col):           column = col; sawCell = true
+            default:                            break
+            }
+        }
+        guard sawCell, let tid = tableId, let col = column else { return nil }
+        return TableInfo(tableId: tid, row: isHeader ? -1 : row, column: col)
+    }
+
+    /// Lay a batch of table cells out as aligned rows (header bold + a rule beneath it).
+    private static func renderTable(_ cells: [(TableInfo, [Inline])]) -> NSAttributedString {
+        let numColumns = max(1, (cells.map { $0.0.column }.max() ?? 0) + 1)
+        let colWidth = max(80, min(190, 560 / CGFloat(numColumns)))
+        let maxChars = max(8, Int(colWidth / 7))
+
+        // Preserve encounter order of rows (header first as parsed).
+        var rowOrder: [Int] = []
+        var rows: [Int: [Int: [Inline]]] = [:]
+        for (info, inlines) in cells {
+            if rows[info.row] == nil { rows[info.row] = [:]; rowOrder.append(info.row) }
+            rows[info.row]?[info.column] = inlines
+        }
+
+        let p = NSMutableParagraphStyle()
+        p.tabStops = (1..<max(1, numColumns)).map {
+            NSTextTab(textAlignment: .left, location: colWidth * CGFloat($0))
+        }
+        p.lineBreakMode = .byTruncatingTail
+        p.paragraphSpacing = 2
+        let topPad = NSMutableParagraphStyle(); topPad.paragraphSpacingBefore = 8; topPad.paragraphSpacing = 2
+        topPad.tabStops = p.tabStops; topPad.lineBreakMode = .byTruncatingTail
+
+        let out = NSMutableAttributedString()
+        for (n, r) in rowOrder.enumerated() {
+            let isHeader = r < 0
+            let base = isHeader
+                ? NSFont.systemFont(ofSize: bodySize, weight: .semibold)
+                : NSFont.systemFont(ofSize: bodySize)
+            let style = n == 0 ? topPad : p
+            let line = NSMutableAttributedString()
+            for col in 0..<numColumns {
+                if col > 0 { line.append(NSAttributedString(string: "\t")) }
+                let inlines = rows[r]?[col] ?? []
+                let plain = inlines.map(\.text).joined()
+                if plain.count > maxChars {
+                    let clipped = String(plain.prefix(maxChars - 1)) + "…"
+                    line.append(NSAttributedString(string: clipped,
+                        attributes: [.font: base, .foregroundColor: NSColor.textColor,
+                                     .paragraphStyle: style]))
+                } else {
+                    line.append(inlineRun(inlines, baseFont: base, paragraphStyle: style))
+                }
+            }
+            line.append(NSAttributedString(string: "\n"))
+            out.append(line)
+
+            if isHeader {  // rule under the header row
+                let rule = NSMutableParagraphStyle(); rule.paragraphSpacing = 4
+                out.append(NSAttributedString(
+                    string: String(repeating: "─", count: min(60, numColumns * 10)) + "\n",
+                    attributes: [.font: NSFont.systemFont(ofSize: bodySize - 3),
+                                 .foregroundColor: NSColor.tertiaryLabelColor,
+                                 .paragraphStyle: rule]))
+            }
+        }
+        return out
     }
 
     private static func paragraph(inlines: [Inline], baseFont: NSFont,
