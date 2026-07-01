@@ -8,5 +8,10 @@
     <!-- Read the file being previewed (the QL host grants access to it). -->
     <key>com.apple.security.files.user-selected.read-only</key>
     <true/>
+    <!-- WKWebView inside a sandboxed extension needs this to launch its web-content /
+         networking helper processes; without it load() hangs (spinning cog). All content
+         is local (app:// scheme), so no actual network egress happens. -->
+    <key>com.apple.security.network.client</key>
+    <true/>
 </dict>
 </plist>

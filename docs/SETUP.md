@@ -81,9 +81,13 @@ Then in Finder: select a `.md` file and press **space** (preview), and view it i
 - **The QL extensions MUST be sandboxed** (`com.apple.security.app-sandbox`) or pkd registers
   them (they show in System Settings) but never activates them → Finder uses its built-in
   text preview. See `QuickLook/Glyph-QuickLook.entitlements`.
-- **Do NOT add `com.apple.security.network.client`** to the QL extensions — a sandboxed QL
-  extension carrying it is *rejected by pkd entirely* (`pluginkit -m` shows nothing). The
-  `WKWebView` preview works fine without it (it loads local content over `app://`).
+- **The preview extension DOES need `com.apple.security.network.client`.** Its `WKWebView`
+  (Milkdown Crepe, read-only, loading local content over `app://`) can't launch its
+  web-content/networking helper processes inside the sandbox without it — `load()` then
+  never returns and Quick Look spins forever. It does **not** break `pluginkit` registration
+  (verified: the extension still shows `+`). An earlier build removed this entitlement
+  believing it broke registration, which is what reintroduced the spinning-cog hang. Keep it.
+  (The thumbnail extension draws natively and needs no such entitlement.)
 - After install, extensions may register as disabled (`!` in `pluginkit -m`). Enable with:
   ```sh
   pluginkit -e use -i com.paolobozzola.glyph.QuickLookPreview

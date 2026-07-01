@@ -3,12 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Glyph Quick Look preview renderer (markdown-it) — built into the preview extension",
+  "description": "Glyph Quick Look preview renderer (Milkdown Crepe, read-only) — built into the preview extension",
   "scripts": {
     "build": "vite build"
   },
   "dependencies": {
-    "markdown-it": "^14.1.0"
+    "@milkdown/crepe": "^7.5.0"
   },
   "devDependencies": {
     "typescript": "^5.5.0",

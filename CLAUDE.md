@@ -8,7 +8,8 @@ live rich-text rendering while the file on disk stays plain, portable Markdown.
 - **Repo:** github.com/paolobozzola/glyph (private initially)
 - **Status:** v1.0 shipped. Editor, documents, formatting, find/replace, spelling, print,
   share, and **Quick Look preview + thumbnail now activate** (notarized Developer ID build;
-  QL extensions must be sandboxed and must NOT carry `network.client` — see `docs/SETUP.md`).
+  QL extensions must be sandboxed and DO need `network.client` for their `WKWebView` to
+  load — see `docs/SETUP.md`).
   Release via `make dist` (`docs/RELEASE.md`). **v1.0 feature-complete** — also shipping
   HTML/PDF export, image paste/drag, outline + word count + focus mode, in-app cheat sheet,
   source⇄WYSIWYG toggle, YAML frontmatter properties panel. **First public build:
@@ -34,7 +35,8 @@ JSON) to disk — only Markdown.
 | Deployment target | **macOS 15 Sequoia** minimum | Modern SwiftUI APIs, reasonable reach |
 | Document model | **AppKit `NSDocument`** (programmatic menu, `main.swift` entry) | Decouples dirty-tracking (`updateChangeCount`) from undo so Milkdown keeps ⌘Z; gives autosave-in-place, Versions, tabs, recent files. *(Pivoted from SwiftUI `DocumentGroup` early in the v1.0 build — SwiftUI couples dirty to the undo manager.)* |
 | Quick Look | Two app-extension targets: **Preview** + **Thumbnail** | Spacebar preview *and* rendered Finder thumbnails |
-| Quick Look rendering | **Native, no web view** — preview = Markdown→`NSAttributedString` in an `NSTextView` (`MarkdownPreviewRenderer`); thumbnail = Core Graphics text-on-page | A `WKWebView` inside the sandboxed + hardened QL extension can't launch WebKit's helper processes → `load()` hangs on a spinning cog. Native rendering is synchronous, can't hang, needs no extra entitlements. (The **editor** app still uses Milkdown/`WKWebView` — it's non-sandboxed.) |
+| Quick Look preview | **Milkdown Crepe, read-only**, in a `WKWebView` — same engine + `frame` theme as the editor, so a preview looks *exactly* like the doc in the editor (`web-preview/`, disables toolbar/block-edit, `setReadonly(true)`) | To match the editor exactly the preview must use the same web renderer. The gotcha: a `WKWebView` in a *sandboxed* extension needs `com.apple.security.network.client` or `load()` hangs on a spinning cog. It does **not** break `pluginkit` registration — an earlier build removed the entitlement believing it did, which reintroduced the hang. Keep it. Watchdog in `PreviewViewController` is a backstop. |
+| Quick Look thumbnail | **Native Core Graphics** text-on-page (`ThumbnailProvider`) — no web view | Thumbnails run off-main-thread and must be fast/synchronous; a web view is overkill and can't hang here. |
 | Distribution | Developer ID + notarize + staple, DMG; Sparkle for updates | Direct download, no sandbox → full filesystem access |
 
 ### MVP native macOS features (all in)

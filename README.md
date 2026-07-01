@@ -46,7 +46,7 @@ Glyph is distributed as a notarized, direct-download DMG (no sandbox → full fi
 
 **[⬇︎ Download the latest release](https://github.com/paolobozzola/glyph/releases/latest)** — open `Glyph.dmg` and drag Glyph to **Applications**. macOS 15+.
 
-> **Release candidate.** `v1.0.0-rc2` is feature-complete and notarized; expect minor polish before the final `v1.0.0`. Prefer to build it yourself? See [Build from source](#build-from-source) below.
+> **Release candidate.** `v1.0.0-rc3` is feature-complete and notarized; expect minor polish before the final `v1.0.0`. Prefer to build it yourself? See [Build from source](#build-from-source) below.
 
 ## Build from source
 
@@ -67,14 +67,14 @@ make run        # builds the editor bundle + app, then launches it
 | App shell | Swift + AppKit `NSDocument` (native tabs, autosave, Versions) |
 | Editing engine | [Milkdown](https://milkdown.dev) (ProseMirror + remark) in a `WKWebView` |
 | Markdown | CommonMark + GFM, faithful round-trip via remark |
-| Quick Look | Preview + Thumbnail app extensions, native (no web view) so they can't hang |
+| Quick Look | Preview renders with the editor's engine (read-only Milkdown) so it matches exactly; native thumbnails |
 | Distribution | Developer ID, notarized, DMG |
 
 Architecture and decisions are documented in [`CLAUDE.md`](CLAUDE.md) and [`docs/`](docs/).
 
 ## Roadmap
 
-- 🚀 **v1.0** — *shipping now as [`v1.0.0-rc2`](https://github.com/paolobozzola/glyph/releases/latest)* — full editor, find/replace, outline, focus mode, export, images, frontmatter, Quick Look, notarized DMG. Final `v1.0.0` after release-candidate polish.
+- 🚀 **v1.0** — *shipping now as [`v1.0.0-rc3`](https://github.com/paolobozzola/glyph/releases/latest)* — full editor, find/replace, outline, focus mode, export, images, frontmatter, Quick Look, notarized DMG. Final `v1.0.0` after release-candidate polish.
 - 🔜 **v2.0** — richer content (code highlighting, LaTeX, slash menu, diagrams), command palette & templates, theming, macOS integration (Spotlight, Shortcuts), and Sparkle auto-updates. See [`docs/V2.md`](docs/V2.md).
 
 ## Support

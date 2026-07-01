@@ -4,9 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Glyph Preview</title>
+    <style>
+      html, body { margin: 0; height: 100%; }
+      body { display: flex; flex-direction: column; }
+      #app { flex: 1 1 auto; min-height: 0; box-sizing: border-box; }
+    </style>
   </head>
   <body>
-    <article id="content" class="markdown-body"></article>
+    <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
