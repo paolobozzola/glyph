@@ -53,13 +53,11 @@ targets:
     platform: macOS
     deploymentTarget: "15.0"
     sources:
+      # Native NSAttributedString renderer — no WKWebView, so no app:// scheme handler
+      # or bundled markdown-it payload (that combo hangs in the sandboxed extension).
       - path: QuickLook/Preview
         excludes:
           - "Info.plist"
-      - Glyph/AppSchemeHandler.swift           # shared with the app
-      - path: QuickLook/Resources/preview      # markdown-it bundle (make web)
-        type: folder
-        buildPhase: resources
     settings:
       base:
         GENERATE_INFOPLIST_FILE: NO
