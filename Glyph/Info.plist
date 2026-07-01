@@ -71,6 +71,25 @@
             <key>NSDocumentClass</key>
             <string>$(PRODUCT_MODULE_NAME).MarkdownDocument</string>
         </dict>
+        <!-- Also open any plain-text file (Markdown *is* plain text). This is what lets
+             Glyph open a `.md` that a given Mac has typed as public.plain-text instead of
+             net.daringfireball.markdown (e.g. before Glyph is registered as the owner) —
+             otherwise NSDocument refuses with "cannot open files in the Markdown Document
+             format". Rank "Alternate" so Glyph does NOT become the default for .txt etc. -->
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Plain Text</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>public.plain-text</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+            <key>NSDocumentClass</key>
+            <string>$(PRODUCT_MODULE_NAME).MarkdownDocument</string>
+        </dict>
     </array>
 </dict>
 </plist>

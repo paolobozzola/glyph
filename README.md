@@ -46,7 +46,7 @@ Glyph is distributed as a notarized, direct-download DMG (no sandbox → full fi
 
 **[⬇︎ Download the latest release](https://github.com/paolobozzola/glyph/releases/latest)** — open `Glyph.dmg` and drag Glyph to **Applications**. macOS 15+.
 
-> **Release candidate.** `v1.0.0-rc4` is feature-complete and notarized; expect minor polish before the final `v1.0.0`. Prefer to build it yourself? See [Build from source](#build-from-source) below.
+> **Release candidate.** `v1.0.0-rc5` is feature-complete and notarized; expect minor polish before the final `v1.0.0`. Prefer to build it yourself? See [Build from source](#build-from-source) below.
 
 ## Build from source
 
@@ -74,7 +74,7 @@ Architecture and decisions are documented in [`CLAUDE.md`](CLAUDE.md) and [`docs
 
 ## Roadmap
 
-- 🚀 **v1.0** — *shipping now as [`v1.0.0-rc4`](https://github.com/paolobozzola/glyph/releases/latest)* — full editor, find/replace, outline, focus mode, export, images, frontmatter, Quick Look, notarized DMG. Final `v1.0.0` after release-candidate polish.
+- 🚀 **v1.0** — *shipping now as [`v1.0.0-rc5`](https://github.com/paolobozzola/glyph/releases/latest)* — full editor, find/replace, outline, focus mode, export, images, frontmatter, Quick Look, notarized DMG. Final `v1.0.0` after release-candidate polish.
 - 🔜 **v2.0** — richer content (code highlighting, LaTeX, slash menu, diagrams), command palette & templates, theming, macOS integration (Spotlight, Shortcuts), and Sparkle auto-updates. See [`docs/V2.md`](docs/V2.md).
 
 ## Support
