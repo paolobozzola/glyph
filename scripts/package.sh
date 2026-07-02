@@ -47,8 +47,10 @@ while IFS= read -r -d '' ext; do
   codesign --force --options runtime --timestamp \
     --entitlements "$QL_ENTITLEMENTS" --sign "$DEV_ID" "$ext"
 done < <(find "$APP/Contents/PlugIns" -maxdepth 1 -name '*.appex' -print0 2>/dev/null)
-# The host app stays non-sandboxed (direct download → full filesystem access).
-codesign --force --options runtime --timestamp --sign "$DEV_ID" "$APP"
+# The host app stays non-sandboxed (direct download → full filesystem access), but carries
+# the App Group entitlement so it can share settings with the sandboxed QL extension.
+codesign --force --options runtime --timestamp \
+  --entitlements "$ROOT/Glyph/Glyph.entitlements" --sign "$DEV_ID" "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
 echo "▶ Gatekeeper assessment (pre-notarization, may say rejected until stapled):"
 spctl -a -vv "$APP" 2>&1 || true

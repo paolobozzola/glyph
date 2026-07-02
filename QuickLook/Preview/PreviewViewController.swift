@@ -49,6 +49,9 @@ class PreviewViewController: NSViewController, QLPreviewingController {
 extension PreviewViewController: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         guard let markdown = pendingMarkdown else { finish(nil); return }
+        // Apply the user's typography (shared via the App Group) so the preview matches the
+        // editor exactly, then render the document.
+        webView.evaluateJavaScript("window.glyphApplySettings && window.glyphApplySettings(\(GlyphSettings.applySettingsJSON))")
         let payload = (try? JSONSerialization.data(withJSONObject: [markdown]))
             .flatMap { String(data: $0, encoding: .utf8) } ?? "[\"\"]"
         webView.evaluateJavaScript("window.glyphRender(\(payload)[0])") { [weak self] _, _ in

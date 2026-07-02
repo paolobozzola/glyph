@@ -13,5 +13,11 @@
          is local (app:// scheme), so no actual network egress happens. -->
     <key>com.apple.security.network.client</key>
     <true/>
+    <!-- Shared App Group: read the user's typography/settings written by the main app, so a
+         Quick Look preview renders identically to the editor. -->
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>group.com.paolobozzola.glyph</string>
+    </array>
 </dict>
 </plist>
