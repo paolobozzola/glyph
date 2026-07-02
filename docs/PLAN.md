@@ -64,6 +64,8 @@ over a custom `app://` scheme handler.
 - [x] Word/char count (status bar), outline/TOC panel, focus / typewriter mode (View menu)
 - [x] Source ⇄ WYSIWYG toggle (raw-Markdown textarea; ⌥⌘M / status-bar button)
 - [x] YAML frontmatter editable properties panel (simple key/value; complex YAML preserved raw)
+- **Next refinements (P1–P8):** see [`POLISH.md`](POLISH.md) — sequenced UX / "wow" polish on
+  the shipped scope. Each phase is gated by a **design & interaction review** step before code.
 
 ### v2.0
 Theme set chosen with the owner. **AI assist is deliberately excluded** to preserve the
