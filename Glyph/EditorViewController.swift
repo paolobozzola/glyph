@@ -100,6 +100,12 @@ final class EditorViewController: NSViewController, WKScriptMessageHandler, WKNa
             }
         case "saveImage":
             handleSaveImage(body)
+        case "openURL":
+            // ⌘-click on a link. Only open web URLs — never file:// or arbitrary schemes.
+            if let s = body["url"] as? String, let url = URL(string: s),
+               let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" {
+                NSWorkspace.shared.open(url)
+            }
         default:
             break
         }

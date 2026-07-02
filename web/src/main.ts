@@ -28,6 +28,7 @@ import {
 import { toggleStrikethroughCommand, insertTableCommand } from "@milkdown/kit/preset/gfm";
 import { Plugin, TextSelection } from "@milkdown/kit/prose/state";
 import { Decoration, DecorationSet } from "@milkdown/kit/prose/view";
+import { deleteRow, deleteColumn, deleteTable } from "@milkdown/kit/prose/tables";
 
 import "@milkdown/crepe/theme/common/style.css";
 import frameLight from "@milkdown/crepe/theme/frame.css?inline";
@@ -119,6 +120,10 @@ headingScale.textContent = `
 .milkdown .ProseMirror h4{font-size:calc(var(--glyph-body,16px)*var(--glyph-h4,1.25));line-height:1.3}
 .milkdown .ProseMirror h5{font-size:calc(var(--glyph-body,16px)*var(--glyph-h5,1.125));line-height:1.4}
 .milkdown .ProseMirror h6{font-size:calc(var(--glyph-body,16px)*var(--glyph-h6,1));line-height:1.5}
+/* ⌘ held → links become "followable" (pointer + gold highlight on hover), like Notion. */
+.glyph-cmd .milkdown .ProseMirror a[href]{cursor:pointer;}
+.glyph-cmd .milkdown .ProseMirror a[href]:hover{background:rgba(230,180,80,.18);border-radius:3px;
+  text-decoration:underline;text-decoration-color:#e6b450;text-decoration-thickness:2px;text-underline-offset:2px;}
 `;
 document.head.appendChild(headingScale);
 
@@ -1197,6 +1202,14 @@ function hideFind(): void {
   }
 }
 
+// Run a raw ProseMirror command (e.g. prosemirror-tables delete row/column) on the editor.
+function runTableCommand(cmd: (state: any, dispatch?: any) => boolean): void {
+  const view = getView();
+  if (!view) return;
+  cmd(view.state, view.dispatch);
+  view.focus();
+}
+
 function runCommand(name: string): void {
   switch (name) {
     case "find": showFind(false); return;
@@ -1209,6 +1222,9 @@ function runCommand(name: string): void {
     case "toggleSource": toggleSource(); return;
     case "addProperties": addProperties(); return;
     case "help": toggleHelp(); return;
+    case "deleteRow": runTableCommand(deleteRow); return;
+    case "deleteColumn": runTableCommand(deleteColumn); return;
+    case "deleteTable": runTableCommand(deleteTable); return;
   }
   if (sourceMode) return;   // formatting commands don't apply to raw source
   const editor = crepe?.editor;
@@ -1256,4 +1272,23 @@ window.glyph = {
 
 // Boot: mount a placeholder, tell the host we're ready; the host replies with the
 // real document via window.glyph.setMarkdown(...).
+// Show a "followable link" cue while ⌘ is held (pointer + gold highlight on hover).
+const setCmd = (on: boolean) => document.documentElement.classList.toggle("glyph-cmd", on);
+window.addEventListener("keydown", (e) => { if (e.key === "Meta") setCmd(true); });
+window.addEventListener("keyup", (e) => { if (e.key === "Meta") setCmd(false); });
+window.addEventListener("blur", () => setCmd(false));
+
+// ⌘-click a link → open it in the default browser (plain click still edits). Capture phase so
+// we intercept before ProseMirror; only http/https are opened (validated on the Swift side).
+for (const evt of ["mousedown", "click"]) {
+  document.addEventListener(evt, (e) => {
+    const me = e as MouseEvent;
+    if (!me.metaKey) return;
+    const a = (me.target as HTMLElement)?.closest?.("a[href]") as HTMLAnchorElement | null;
+    if (!a) return;
+    e.preventDefault(); e.stopPropagation();
+    if (evt === "click") postToHost({ type: "openURL", url: a.href });
+  }, true);
+}
+
 void mount("# Glyph\n\nLoading…\n").then(() => postToHost({ type: "ready" }));

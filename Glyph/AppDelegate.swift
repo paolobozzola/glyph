@@ -195,7 +195,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         addCommand(to: formatMenu, "Code Block", "codeBlock")
         formatMenu.addItem(.separator())
         addCommand(to: formatMenu, "Horizontal Rule", "hr")
-        addCommand(to: formatMenu, "Insert Table", "table")
+        // Table: insert + delete row/column/table (place the cursor in a cell first).
+        let tableItem = formatMenu.addItem(withTitle: "Table", action: nil, keyEquivalent: "")
+        let tableMenu = NSMenu(title: "Table")
+        tableItem.submenu = tableMenu
+        addCommand(to: tableMenu, "Insert Table", "table")
+        tableMenu.addItem(.separator())
+        addCommand(to: tableMenu, "Delete Row", "deleteRow")
+        addCommand(to: tableMenu, "Delete Column", "deleteColumn")
+        addCommand(to: tableMenu, "Delete Table", "deleteTable")
         formatMenu.addItem(.separator())
         addCommand(to: formatMenu, "Add Properties", "addProperties")
 
