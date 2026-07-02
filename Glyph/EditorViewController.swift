@@ -53,6 +53,14 @@ final class EditorViewController: NSViewController, WKScriptMessageHandler, WKNa
             name: NSNotification.Name("AppleInterfaceThemeChangedNotification"),
             object: nil
         )
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(settingsChanged),
+            name: GlyphSettings.didChange, object: nil)
+    }
+
+    @objc private func settingsChanged() {
+        guard isEditorReady else { return }
+        GlyphSettings.pushValues(to: webView)   // values only — don't re-toggle modes
     }
 
     override func viewDidAppear() {
@@ -63,6 +71,7 @@ final class EditorViewController: NSViewController, WKScriptMessageHandler, WKNa
 
     deinit {
         DistributedNotificationCenter.default().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
 
     // MARK: - Bridge: JS → Swift
@@ -77,10 +86,17 @@ final class EditorViewController: NSViewController, WKScriptMessageHandler, WKNa
             isEditorReady = true
             loadMarkdownIntoEditor()
             pushTheme()
+            GlyphSettings.apply(to: webView, restoringModes: true)
         case "change":
             if let markdown = body["markdown"] as? String {
                 document?.text = markdown
                 document?.updateChangeCount(.changeDone)
+            }
+        case "modes":
+            // Editor toggled Focus/Typewriter — remember for next launch if enabled.
+            if GlyphSettings.remember {
+                GlyphSettings.defaults.set(body["dim"] as? Bool ?? false, forKey: GlyphSettings.lastDimKey)
+                GlyphSettings.defaults.set(body["typewriter"] as? Bool ?? false, forKey: GlyphSettings.lastTypewriterKey)
             }
         case "saveImage":
             handleSaveImage(body)

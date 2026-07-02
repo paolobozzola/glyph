@@ -59,6 +59,10 @@ type Bridge = {
   cmd: (name: string) => void;
   exportHTML: () => string;
   imageSaved: (id: number, path: string | null) => void;
+  applySettings: (s: { dim?: number; twAnchor?: number; twCadence?: string;
+                       bodyPx?: number; headings?: number[];
+                       fonts?: { heading?: string; body?: string; code?: string } }) => void;
+  restoreModes: (s: { dim?: boolean; typewriter?: boolean }) => void;
 };
 
 declare global {
@@ -97,13 +101,24 @@ applyTheme(window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : 
 // the theme style (equal specificity → later rule wins). Keep in sync with web-preview/.
 const headingScale = document.createElement("style");
 headingScale.id = "glyph-heading-scale";
+// Relative type scale: --glyph-body is the base px (Body = 1rem); --glyph-hN are rem
+// multiples. Sizes = calc(base × multiple). Defaults match docs/POLISH.md; the native
+// Settings ▸ Typography tab overrides these vars live. Keep in sync with web-preview/.
 headingScale.textContent = `
-.milkdown .ProseMirror h1{font-size:49px;line-height:1.15}
-.milkdown .ProseMirror h2{font-size:39px;line-height:1.2}
-.milkdown .ProseMirror h3{font-size:31px;line-height:1.25}
-.milkdown .ProseMirror h4{font-size:25px;line-height:1.3}
-.milkdown .ProseMirror h5{font-size:20px;line-height:1.4}
-.milkdown .ProseMirror h6{font-size:16px;line-height:1.5}
+:root{--glyph-body:16px;--glyph-h1:2.75;--glyph-h2:2;--glyph-h3:1.5;--glyph-h4:1.25;--glyph-h5:1.125;--glyph-h6:1;
+  --glyph-font-title:ui-serif,"New York",Georgia,serif;
+  --glyph-font-body:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  --glyph-font-code:ui-monospace,"SF Mono",Menlo,monospace;}
+/* The theme scopes --crepe-font-* on .milkdown, so map our vars there (this rule, appended
+   after the theme, wins) — otherwise setting fonts on :root is shadowed and has no effect. */
+.milkdown{--crepe-font-title:var(--glyph-font-title);--crepe-font-default:var(--glyph-font-body);--crepe-font-code:var(--glyph-font-code);}
+.milkdown .ProseMirror,.milkdown .ProseMirror p{font-size:var(--glyph-body,16px);}
+.milkdown .ProseMirror h1{font-size:calc(var(--glyph-body,16px)*var(--glyph-h1,2.75));line-height:1.15}
+.milkdown .ProseMirror h2{font-size:calc(var(--glyph-body,16px)*var(--glyph-h2,2));line-height:1.2}
+.milkdown .ProseMirror h3{font-size:calc(var(--glyph-body,16px)*var(--glyph-h3,1.5));line-height:1.25}
+.milkdown .ProseMirror h4{font-size:calc(var(--glyph-body,16px)*var(--glyph-h4,1.25));line-height:1.3}
+.milkdown .ProseMirror h5{font-size:calc(var(--glyph-body,16px)*var(--glyph-h5,1.125));line-height:1.4}
+.milkdown .ProseMirror h6{font-size:calc(var(--glyph-body,16px)*var(--glyph-h6,1));line-height:1.5}
 `;
 document.head.appendChild(headingScale);
 
@@ -482,20 +497,81 @@ function addProperties(): void {
   (propsRowsEl?.querySelector(".glyph-props-key") as HTMLInputElement)?.focus();
 }
 
+// --- typography fonts ----------------------------------------------------
+// Friendly names → CSS font stacks (all macOS-available; no bundling). Chosen in
+// Settings ▸ Typography and applied by overriding the Crepe theme font variables, so the
+// whole editor (and the read-only preview) follows. Keep in sync with web-preview/.
+const FONT_STACKS: Record<string, string> = {
+  "New York": 'ui-serif, "New York", Georgia, serif',
+  "Charter": 'Charter, Georgia, "Times New Roman", serif',
+  "Iowan Old Style": '"Iowan Old Style", Georgia, serif',
+  "Georgia": 'Georgia, "Times New Roman", serif',
+  "System": '-apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+  "Helvetica Neue": '"Helvetica Neue", Helvetica, Arial, sans-serif',
+  "Avenir": '"Avenir Next", Avenir, sans-serif',
+  "SF Mono": 'ui-monospace, "SF Mono", Menlo, monospace',
+  "Menlo": 'Menlo, Monaco, monospace',
+  "Monaco": 'Monaco, Menlo, monospace',
+};
+function applyFonts(f: { heading?: string; body?: string; code?: string }): void {
+  const set = (v: string, name?: string) => {
+    if (name) document.documentElement.style.setProperty(v, FONT_STACKS[name] ?? name);
+  };
+  set("--glyph-font-title", f.heading);
+  set("--glyph-font-body", f.body);
+  set("--glyph-font-code", f.code);
+}
+
 // --- outline · word count · focus mode -----------------------------------
 
-let focusMode = false;
+// Two independent modes (see docs/POLISH.md P1): Focus dims non-active blocks; Typewriter
+// keeps the caret line at a fixed anchor. Both are configurable in the native Settings window.
+let dimMode = false;
+let typewriterMode = false;
+// twCadence: "line" recenters when the caret leaves the anchored line; "paragraph" only when
+// the caret enters a different top-level block. Chosen from the View ▸ Typewriter Cadence menu.
+const editorSettings = { dim: 0.45, twAnchor: 0.45, twCadence: "line" as "line" | "paragraph" };
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let lastTwBlock = -1;
 
-// Dims every top-level block except the one holding the selection (focus mode).
+function nearestScrollParent(node: HTMLElement | null): HTMLElement {
+  let el: HTMLElement | null = node;
+  while (el) {
+    const oy = getComputedStyle(el).overflowY;
+    if ((oy === "auto" || oy === "scroll") && el.scrollHeight > el.clientHeight) return el;
+    el = el.parentElement;
+  }
+  return (document.scrollingElement as HTMLElement) || document.documentElement;
+}
+
+// Custom eased scroll (ease-in-out cubic) — smoother/longer than the browser's native
+// `behavior:"smooth"`, which is what gives the typewriter its "wow" glide. Reduced-motion jumps.
+let twRaf: number | undefined;
+function glideScroll(el: HTMLElement, delta: number): void {
+  if (twRaf) cancelAnimationFrame(twRaf);
+  if (prefersReducedMotion) { el.scrollTop += delta; return; }
+  const start = el.scrollTop;
+  const t0 = performance.now();
+  const dur = 460;
+  const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const step = (now: number) => {
+    const p = Math.min(1, (now - t0) / dur);
+    el.scrollTop = start + delta * ease(p);
+    if (p < 1) twRaf = requestAnimationFrame(step);
+  };
+  twRaf = requestAnimationFrame(step);
+}
+
 function focusPlugin(): Plugin {
   return new Plugin({
     props: {
       decorations(state) {
-        if (!focusMode) return null;
-        const { $from } = state.selection;
+        if (!dimMode) return null;
+        const { $from, $to } = state.selection;
         if ($from.depth < 1) return null;
+        // Keep every top-level block the selection touches fully inked, not just $from's.
         const from = $from.before(1);
-        const to = $from.after(1);
+        const to = $to.depth >= 1 ? $to.after(1) : from;
         return DecorationSet.create(state.doc, [
           Decoration.node(from, to, { class: "glyph-active" }),
         ]);
@@ -504,11 +580,26 @@ function focusPlugin(): Plugin {
     view() {
       return {
         update(view) {
-          if (!focusMode) return;
-          // Typewriter: keep the caret's block vertically centered.
-          const dom = view.domAtPos(view.state.selection.head).node as Node;
-          const el = dom.nodeType === 1 ? (dom as Element) : dom.parentElement;
-          el?.scrollIntoView({ block: "center", behavior: "smooth" });
+          if (!typewriterMode) return;
+          const sel = view.state.selection;
+          let c: { top: number; bottom: number };
+          try { c = view.coordsAtPos(sel.head); } catch { return; }
+          const block = sel.$head.depth >= 1 ? sel.$head.before(1) : sel.head;
+          const target = window.innerHeight * editorSettings.twAnchor;
+          const delta = c.top - target;
+
+          if (editorSettings.twCadence === "paragraph") {
+            if (block === lastTwBlock) return;   // same paragraph → don't move
+            lastTwBlock = block;
+          } else {
+            // Line cadence: only recenter once the caret leaves the anchored line band → no
+            // per-keystroke jitter while typing within a line.
+            const lineH = Math.max(16, c.bottom - c.top);
+            if (Math.abs(delta) < lineH) return;
+            lastTwBlock = block;
+          }
+          if (Math.abs(delta) < 2) return;
+          glideScroll(nearestScrollParent(view.dom as HTMLElement), delta);
         },
       };
     },
@@ -548,11 +639,12 @@ const CHROME_CSS = `
 .glyph-outline a.lvl3{padding-left:38px;color:#6b6678;}
 .glyph-outline a.lvl4,.glyph-outline a.lvl5,.glyph-outline a.lvl6{padding-left:52px;color:#6b6678;font-size:12.5px;}
 .glyph-outline-empty{padding:6px 10px;color:#9a93a8;}
-.glyph-focus-on .ProseMirror>*{opacity:.45;transition:opacity .25s ease;}
-.glyph-focus-on .ProseMirror>.glyph-active,
-.glyph-focus-on .ProseMirror .glyph-active,
-.glyph-focus-on .ProseMirror>*:has(.glyph-active){opacity:1 !important;}
-.glyph-focus-on .ProseMirror{padding-top:40vh;padding-bottom:40vh;}
+.glyph-dim-on .ProseMirror>*{opacity:var(--glyph-dim,.45);transition:opacity .35s cubic-bezier(.4,0,.2,1);}
+.glyph-dim-on .ProseMirror>.glyph-active,
+.glyph-dim-on .ProseMirror .glyph-active,
+.glyph-dim-on .ProseMirror>*:has(.glyph-active){opacity:1 !important;}
+.glyph-tw-on .ProseMirror{padding-top:var(--glyph-tw-pad,45vh);padding-bottom:var(--glyph-tw-pad,45vh);}
+@media (prefers-reduced-motion:reduce){.glyph-dim-on .ProseMirror>*{transition:none;}}
 @keyframes glyph-flash{0%{background:rgba(230,180,80,.45);}100%{background:transparent;}}
 .glyph-flash{animation:glyph-flash 1s ease;border-radius:4px;}
 [data-theme=dark] .glyph-status{background:rgba(35,32,48,.82);color:#9a93a8;border-top-color:rgba(255,255,255,.08);}
@@ -571,6 +663,7 @@ let outlineEl: HTMLElement;
 let outlineListEl: HTMLElement;
 let outlineBtn: HTMLButtonElement;
 let focusBtn: HTMLButtonElement;
+let typewriterBtn: HTMLButtonElement;
 let sourceBtn: HTMLButtonElement | undefined;
 
 // --- help / cheat sheet --------------------------------------------------
@@ -721,11 +814,13 @@ function ensureChrome(): void {
       <button data-act="source">Markdown</button>
       <button data-act="outline">Outline</button>
       <button data-act="focus">Focus</button>
+      <button data-act="typewriter">Typewriter</button>
     </span>`;
   document.body.appendChild(status);
   countEl = status.querySelector(".glyph-count") as HTMLElement;
   outlineBtn = status.querySelector('[data-act="outline"]') as HTMLButtonElement;
   focusBtn = status.querySelector('[data-act="focus"]') as HTMLButtonElement;
+  typewriterBtn = status.querySelector('[data-act="typewriter"]') as HTMLButtonElement;
   sourceBtn = status.querySelector('[data-act="source"]') as HTMLButtonElement;
   status.addEventListener("click", (e) => {
     const btn = (e.target as HTMLElement).closest("button");
@@ -733,6 +828,7 @@ function ensureChrome(): void {
     const act = btn.getAttribute("data-act");
     if (act === "outline") toggleOutline();
     else if (act === "focus") toggleFocus();
+    else if (act === "typewriter") toggleTypewriter();
     else if (act === "source") toggleSource();
   });
 
@@ -830,14 +926,60 @@ function toggleOutline(): void {
   refreshOutlineIfOpen();
 }
 
-function toggleFocus(): void {
+function toggleFocus(): void {   // "Focus" = dim non-active blocks
   ensureChrome();
-  focusMode = !focusMode;
-  document.documentElement.classList.toggle("glyph-focus-on", focusMode);
-  focusBtn?.classList.toggle("on", focusMode);
-  // Force the focus plugin's decorations to recompute (empty transaction).
+  dimMode = !dimMode;
+  document.documentElement.classList.toggle("glyph-dim-on", dimMode);
+  focusBtn?.classList.toggle("on", dimMode);
   const view = getView();
-  if (view) view.dispatch(view.state.tr);
+  if (view) view.dispatch(view.state.tr);   // recompute decorations
+  postToHost({ type: "modes", dim: dimMode, typewriter: typewriterMode });
+}
+
+function toggleTypewriter(): void {   // center the caret line at the anchor
+  ensureChrome();
+  typewriterMode = !typewriterMode;
+  document.documentElement.classList.toggle("glyph-tw-on", typewriterMode);
+  typewriterBtn?.classList.toggle("on", typewriterMode);
+  lastTwBlock = -1;   // force a recenter when (re)enabled
+  const view = getView();
+  if (view && typewriterMode) view.dispatch(view.state.tr);   // trigger initial recenter
+  postToHost({ type: "modes", dim: dimMode, typewriter: typewriterMode });
+}
+
+// Called by the native Settings window / Focus menu over the bridge.
+function applyEditorSettings(s: { dim?: number; twAnchor?: number; twCadence?: string }): void {
+  if (typeof s.dim === "number") {
+    editorSettings.dim = s.dim;
+    document.documentElement.style.setProperty("--glyph-dim", String(s.dim));
+  }
+  if (typeof s.twAnchor === "number") {
+    editorSettings.twAnchor = s.twAnchor;
+    document.documentElement.style.setProperty("--glyph-tw-pad", `${Math.round(s.twAnchor * 100)}vh`);
+  }
+  if (s.twCadence === "line" || s.twCadence === "paragraph") {
+    editorSettings.twCadence = s.twCadence;
+    lastTwBlock = -1;   // re-evaluate on next caret move
+  }
+  // Relative type scale: --glyph-body is the base px; --glyph-hN are rem multiples; the
+  // editor CSS sizes headings as calc(base × multiple). See docs/POLISH.md typography.
+  if (typeof s.bodyPx === "number") {
+    document.documentElement.style.setProperty("--glyph-body", `${s.bodyPx}px`);
+  }
+  if (Array.isArray(s.headings)) {
+    ["h1", "h2", "h3", "h4", "h5", "h6"].forEach((h, i) => {
+      if (typeof s.headings![i] === "number") {
+        document.documentElement.style.setProperty(`--glyph-${h}`, String(s.headings![i]));
+      }
+    });
+  }
+  if (s.fonts) applyFonts(s.fonts);
+}
+
+// Called by native on launch to restore remembered modes (Settings ▸ Remember modes).
+function restoreModes(s: { dim?: boolean; typewriter?: boolean }): void {
+  if (s.dim && !dimMode) toggleFocus();
+  if (s.typewriter && !typewriterMode) toggleTypewriter();
 }
 
 // --- source (raw Markdown) mode ------------------------------------------
@@ -881,7 +1023,8 @@ function enterSource(): void {
   ensureChrome();
   ensureSource();
   if (outlineEl && !outlineEl.hidden) toggleOutline();   // close distractions
-  if (focusMode) toggleFocus();
+  if (dimMode) toggleFocus();
+  if (typewriterMode) toggleTypewriter();
   const md = fullMarkdown(crepe ? crepe.getMarkdown() : lastMarkdown);  // include frontmatter
   sourceEl!.value = md;
   sourceMode = true;
@@ -1062,6 +1205,7 @@ function runCommand(name: string): void {
     case "findPrev": findPrevMatch(); return;
     case "toggleOutline": toggleOutline(); return;
     case "toggleFocus": toggleFocus(); return;
+    case "toggleTypewriter": toggleTypewriter(); return;
     case "toggleSource": toggleSource(); return;
     case "addProperties": addProperties(); return;
     case "help": toggleHelp(); return;
@@ -1106,6 +1250,8 @@ window.glyph = {
     const resolve = pendingImages.get(id);
     if (resolve) { pendingImages.delete(id); resolve(path); }
   },
+  applySettings: (s) => applyEditorSettings(s),
+  restoreModes: (s) => restoreModes(s),
 };
 
 // Boot: mount a placeholder, tell the host we're ready; the host replies with the

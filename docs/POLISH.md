@@ -44,6 +44,19 @@ centered while typing/arrowing; toggling off restores full opacity and normal sc
 
 **Verify:** Playwright (class/decoration present on non-active blocks) + manual scroll feel.
 
+**✅ Design approved (2026-07-02):**
+- **Two independent toggles** (not one mode): **Focus** = dim non-active blocks; **Typewriter**
+  = center the active line. Status-bar buttons + View-menu items + shortcuts (`⌃⌘F` Focus,
+  `⌃⌘T` Typewriter); `Esc` exits both while editing.
+- **Typewriter** recenters **only on line/block change** (no per-keystroke jitter), anchor 45%,
+  `smooth`; never fights manual scroll.
+- **Native Settings window (`⌘,`)** — new "Editing" pane, the home for preferences across all
+  phases. P1 settings: **Dim intensity** (Subtle .6 / Medium .45 / Strong .3, default Medium) ·
+  **Typewriter anchor** (Top 38% / Center 45% / Middle 50%) · **Typewriter cadence** (On line
+  change / Continuous) · **Remember modes across launches** (on/off). Persisted in
+  `UserDefaults`; pushed to the editor over the bridge on launch and on every change.
+- **Accessibility:** honor `prefers-reduced-motion` (no fades / no smooth-scroll, jump instead).
+
 ---
 
 ## P2 — Ergonomic links + table controls  *(proposal #10)*  · Effort: S–M

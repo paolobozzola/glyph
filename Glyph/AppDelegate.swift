@@ -55,6 +55,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // Document-based app: open an untitled document on launch / dock click.
     func applicationShouldOpenUntitledFile(_ sender: NSApplication) -> Bool { true }
 
+    // MARK: - Settings (⌘,)
+
+    private lazy var settingsWC = SettingsWindowController()
+
+    @objc func showSettings(_ sender: Any?) { settingsWC.present() }
+
+    // Typewriter cadence lives in the View menu (radio Per Line / Per Paragraph) so it's a
+    // quick switch while writing, not buried in Settings.
+    private var cadenceLineItem: NSMenuItem?
+    private var cadenceParaItem: NSMenuItem?
+
+    @objc func setTypewriterCadence(_ sender: NSMenuItem) {
+        GlyphSettings.defaults.set(sender.representedObject as? String ?? "line", forKey: GlyphSettings.cadenceKey)
+        updateCadenceChecks()
+        NotificationCenter.default.post(name: GlyphSettings.didChange, object: nil)
+    }
+
+    private func updateCadenceChecks() {
+        let c = GlyphSettings.cadence
+        cadenceLineItem?.state = (c == "line") ? .on : .off
+        cadenceParaItem?.state = (c == "paragraph") ? .on : .off
+    }
+
     // MARK: - Main menu (programmatic)
 
     private func buildMainMenu() -> NSMenu {
@@ -67,6 +90,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let appMenu = NSMenu()
         appItem.submenu = appMenu
         appMenu.addItem(withTitle: "About \(appName)", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        appMenu.addItem(.separator())
+        let settingsItem = appMenu.addItem(withTitle: "Settings…", action: #selector(showSettings(_:)), keyEquivalent: ",")
+        settingsItem.target = self
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Hide \(appName)", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         let hideOthers = appMenu.addItem(withTitle: "Hide Others", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
@@ -180,7 +206,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         viewItem.submenu = viewMenu
         addCommand(to: viewMenu, "Show Outline", "toggleOutline", key: "o", modifiers: [.command, .option])
         addCommand(to: viewMenu, "Markdown Source", "toggleSource", key: "m", modifiers: [.command, .option])
-        addCommand(to: viewMenu, "Focus Mode", "toggleFocus")   // no accelerator (⌃⌘F is Full Screen)
+        addCommand(to: viewMenu, "Focus", "toggleFocus", key: "f", modifiers: [.command, .shift])
+        addCommand(to: viewMenu, "Typewriter", "toggleTypewriter", key: "t", modifiers: [.command, .shift])
+        let cadenceItem = viewMenu.addItem(withTitle: "Typewriter Cadence", action: nil, keyEquivalent: "")
+        let cadenceMenu = NSMenu(title: "Typewriter Cadence")
+        cadenceItem.submenu = cadenceMenu
+        cadenceLineItem = cadenceMenu.addItem(withTitle: "Per Line", action: #selector(setTypewriterCadence(_:)), keyEquivalent: "")
+        cadenceLineItem?.representedObject = "line"; cadenceLineItem?.target = self
+        cadenceParaItem = cadenceMenu.addItem(withTitle: "Per Paragraph", action: #selector(setTypewriterCadence(_:)), keyEquivalent: "")
+        cadenceParaItem?.representedObject = "paragraph"; cadenceParaItem?.target = self
+        updateCadenceChecks()
         viewMenu.addItem(.separator())
         viewMenu.addItem(withTitle: "Enter Full Screen", action: #selector(NSWindow.toggleFullScreen(_:)), keyEquivalent: "f")
             .keyEquivalentModifierMask = [.command, .control]
